@@ -235,7 +235,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
     <div class="intro-note" style="margin-bottom:14px">על פי החלטת ממשלה 1950, רכש חברתי הוא מנגנון לאספקת שירותים חברתיים במיקור חוץ, שבו המדינה רוכשת שירותי רווחה, בריאות וחינוך מגורמים חיצוניים במקום לספק אותם באופן ישיר. במודל זה, המדינה מתקשרת עם מפעיל חיצוני לשם ביצוע השירות בפועל, אך היא זו שממשיכה לשאת באחריות המלאה להסדרת השירות, לקביעת המדיניות, להגדרת הסטנדרטים המקצועיים, ולפיקוח על איכותו ורציפותו. המפעילים המספקים את השירותים כוללים בעיקר ארגונים ללא כוונת רווח, חברות מהמגזר העסקי ורשויות מקומיות.</div>
 
     <div class="scope-frame">
-      <div class="year-strip-local"><span class="filter-label">טווח שנים (משבצות אלה בלבד)</span><div class="year-strip" id="s1KpiYearStrip"></div></div>
+      <div class="year-strip-local"><span class="filter-label">טווח שנים (משבצות אלה ותרשים ההתפלגות שמתחת)</span><div class="year-strip" id="s1KpiYearStrip"></div></div>
       <div class="grid cols-4" id="s1-kpis"></div>
     </div>
 
@@ -246,7 +246,6 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
       <div class="card-head"><div><div class="card-title">התפלגות רכש לפי משרד</div>
       <div class="card-sub">כל פרוסה היא אחוז מסך הרכש החברתי שמיוחס לאותו משרד — רווחה, בריאות או חינוך — מתוך תקציב מאושר בלבד, לא ביצוע בפועל. אם נבחר משרד או שנים ספציפיות בסרגל שמתחת לכותרת, התרשים מתעדכן ומראה את ההתפלגות לפי אותו סינון בלבד.</div></div>
       <span class="tag-row"><span class="tag verified" id="tagMinistrySplit">✓ מאומת</span><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="התרשים מראה כיצד מתחלק סך הרכש החברתי הנבחר בין שלושת המשרדים, כדי להבין את המשקל היחסי של כל אחד מתוכם.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartMinistrySplit" data-export-name="התפלגות רכש לפי משרד" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
-      <div class="year-strip-local" style="margin-top:-4px"><span class="filter-label">טווח שנים</span><div class="year-strip" id="msYearStrip"></div></div>
       <canvas id="chartMinistrySplit" height="200"></canvas>
       <div class="legend" id="legendMinistrySplit"></div>
       <div class="src" id="srcMinistrySplit"></div>
@@ -916,8 +915,10 @@ function initApp() {
 
   // סרגלי שנים מקומיים: כל אחד עצמאי לחלוטין ומשפיע רק על המשבצת/התרשים שלו, במקום סרגל
   // גלובלי אחד שהשפיע בפועל רק על חלק קטן מהתרשימים אך הוצג כאילו הוא חל על כל המסך.
+  // שני סרגלי שנים נפרדים על מסך 1 (אחד למשבצות ה-KPI, אחד לתרשים ההתפלגות שמתחתיהן) אוחדו לסרגל
+  // אחד משותף, אחרי שהתברר שהכפילות מבלבלת: הזזת סרגל אחד שינתה רק את התרשים או רק את המשבצות,
+  // כשלכאורה שניהם אמורים להתייחס לאותו טווח שנים על אותו מסך בדיוק.
   var s1KpiYearFilter = createYearFilter(document.getElementById("s1KpiYearStrip"));
-  var msYearFilter = createYearFilter(document.getElementById("msYearStrip"));
   var EXEMPT_YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
   var s2KpiYearFilter = createYearFilter(document.getElementById("s2KpiYearStrip"), EXEMPT_YEARS);
   var exemptYearFilter = createYearFilter(document.getElementById("exemptYearStrip"), EXEMPT_YEARS);
@@ -1502,7 +1503,7 @@ function initApp() {
   }
 
   function renderS1Charts() {
-    var st = state(), years = msYearFilter.get();
+    var st = state(), years = s1KpiYearFilter.get();
     var opF = optypeCountShare(st.ministry, st.optype);
 
     // ההתפלגות תמיד מחושבת מבלוק התקציב (aggregateMinistrySplit) על פני טווח השנים שנבחר, כולל
