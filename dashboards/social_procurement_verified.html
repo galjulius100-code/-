@@ -1451,21 +1451,17 @@ function initApp() {
     var st = state(), years = s1KpiYearFilter.get(), latestYear = years[years.length - 1];
     var ylabel = yearsLabel(years);
     var container = document.getElementById("s1-kpis"); container.innerHTML = "";
-    var isAllYears = years.length === YEARS.length;
     var opF = optypeCountShare(st.ministry, st.optype);
-    var totalParts, totalTagKind, totalSrcText;
-    if (isAllYears) {
-      totalParts = formatBillionsParts(svcMinistryTotalB(st.ministry));
-      totalTagKind = "verified";
-      totalSrcText = "סכימת התקציב של כל 239 השירותים במשרד הנבחר, מפתח לרכש חברתי, נשלף 22.09.2026.";
-    } else {
-      var total = aggregateMinistryTotal(years, st.ministry) * opF;
-      totalParts = formatBillionsParts(total);
-      totalTagKind = st.optype === "all" ? "verified" : "estimate";
-      totalSrcText = st.optype === "all"
-        ? "תקציב מאושר, ייצוא מפתח לרכש חברתי, 22.09.2026."
-        : "אמדן: הנתונים אינם קיימים ברמת שירות בודד לפי סוג מפעיל, ולכן ההיקף הכולל משוקלל לפי חלקו של סוג המפעיל הנבחר מתוך מניין המפעילים בלבד — לא מתוך משקלו הכספי בפועל, שעשוי להיות שונה בהרבה.";
-    }
+    // הסך תמיד מחושב מבלוק התקציב (aggregateMinistryTotal) על פני טווח השנים שנבחר, כולל "כל
+    // השנים": לפני התיקון, "כל השנים" עבר למקור אחר (סכימת 239 השירותים, שהוא חתך נקודתי אחד)
+    // ולכן הציג מספר של שנה בודדת תחת תווית שטוענת לטווח רב-שנתי. הכותרת והמספר תמיד מתייחסים
+    // כעת לאותו טווח שנים בדיוק.
+    var total = aggregateMinistryTotal(years, st.ministry) * opF;
+    var totalParts = formatBillionsParts(total);
+    var totalTagKind = st.optype === "all" ? "verified" : "estimate";
+    var totalSrcText = st.optype === "all"
+      ? "תקציב מאושר, ייצוא מפתח לרכש חברתי, 22.09.2026."
+      : "אמדן: הנתונים אינם קיימים ברמת שירות בודד לפי סוג מפעיל, ולכן ההיקף הכולל משוקלל לפי חלקו של סוג המפעיל הנבחר מתוך מניין המפעילים בלבד — לא מתוך משקלו הכספי בפועל, שעשוי להיות שונה בהרבה.";
     container.appendChild(kpiTile("סך רכש (" + ylabel + ")", totalParts.value, totalParts.unit, null, null,
       totalTagKind, totalSrcText,
       "הסכום הכולל של הרכש החברתי בטווח השנים והמשרדים שנבחרו בסרגל הסינון."));
@@ -1507,49 +1503,30 @@ function initApp() {
 
   function renderS1Charts() {
     var st = state(), years = msYearFilter.get();
-    var isAllYears = years.length === YEARS.length;
     var opF = optypeCountShare(st.ministry, st.optype);
 
+    // ההתפלגות תמיד מחושבת מבלוק התקציב (aggregateMinistrySplit) על פני טווח השנים שנבחר, כולל
+    // "כל השנים": לפני התיקון, "כל השנים" עבר למקור נקודתי אחר (סכימת 239 השירותים), שאינו תלוי
+    // בטווח השנים כלל — כך שבחירת שנים שונות הציגה את אותו תרשים בדיוק תחת תוויות שונות.
     var mLabels, mValues, mColors, mAmounts;
-    if (isAllYears) {
-      var splitByService = svcMinistrySplitB();
-      if (st.ministry === "all") {
-        mLabels = splitByService.map(function (r) { return r.label; });
-        mValues = splitByService.map(function (r) { return r.pct; });
-        mColors = splitByService.map(function (r) { return cssVar(r.color.replace("var(", "").replace(")", "")); });
-        mAmounts = splitByService.map(function (r) { return formatBillions(r.amount); });
-      } else {
-        var chosenSvcAmount = svcMinistryTotalB(st.ministry);
-        mLabels = MINISTRIES.map(function (m) { return m.label; });
-        mValues = MINISTRIES.map(function (m) { return m.key === st.ministry ? 100 : 0; });
-        mColors = MINISTRIES.map(function (m) { return cssVar(m.color.replace("var(", "").replace(")", "")); });
-        mAmounts = MINISTRIES.map(function (m) { return m.key === st.ministry ? formatBillions(chosenSvcAmount) : ""; });
-      }
+    var splitByMinistry = aggregateMinistrySplit(years);
+    if (st.ministry === "all") {
+      mLabels = splitByMinistry.map(function (r) { return r.label; });
+      mValues = splitByMinistry.map(function (r) { return r.pct; });
+      mColors = splitByMinistry.map(function (r) { return cssVar(r.color.replace("var(", "").replace(")", "")); });
+      mAmounts = splitByMinistry.map(function (r) { return formatBillions(r.amount * opF); });
     } else {
-      var splitByMinistry = aggregateMinistrySplit(years);
-      if (st.ministry === "all") {
-        mLabels = splitByMinistry.map(function (r) { return r.label; });
-        mValues = splitByMinistry.map(function (r) { return r.pct; });
-        mColors = splitByMinistry.map(function (r) { return cssVar(r.color.replace("var(", "").replace(")", "")); });
-        mAmounts = splitByMinistry.map(function (r) { return formatBillions(r.amount * opF); });
-      } else {
-        var chosenAmount = aggregateMinistryTotal(years, st.ministry) * opF;
-        mLabels = MINISTRIES.map(function (m) { return m.label; });
-        mValues = MINISTRIES.map(function (m) { return m.key === st.ministry ? 100 : 0; });
-        mColors = MINISTRIES.map(function (m) { return cssVar(m.color.replace("var(", "").replace(")", "")); });
-        mAmounts = MINISTRIES.map(function (m) { return m.key === st.ministry ? formatBillions(chosenAmount) : ""; });
-      }
+      var chosenAmount = aggregateMinistryTotal(years, st.ministry) * opF;
+      mLabels = MINISTRIES.map(function (m) { return m.label; });
+      mValues = MINISTRIES.map(function (m) { return m.key === st.ministry ? 100 : 0; });
+      mColors = MINISTRIES.map(function (m) { return cssVar(m.color.replace("var(", "").replace(")", "")); });
+      mAmounts = MINISTRIES.map(function (m) { return m.key === st.ministry ? formatBillions(chosenAmount) : ""; });
     }
     makeDonut("chartMinistrySplit", mLabels, mValues, mColors, "legendMinistrySplit", mAmounts);
     var tagMS = document.getElementById("tagMinistrySplit");
     var tagTrend = document.getElementById("tagTrend");
     var optypeCaveat = "אמדן: מסונן לפי סוג מפעיל לפי חלקו במניין המפעילים, לא לפי משקלו הכספי בפועל — הנתון עשוי לסטות מההיקף הכספי האמיתי.";
-    // תרשים ההתפלגות נשען, כשכל השנים נבחרות, על מאתיים ארבעים ושניים השירותים — נתון שאינו מפולח
-    // לפי סוג מפעיל בכלל, ולכן אינו תלוי בסינון הזה ותמיד מאומת באותו מצב. תרשים המגמה הרב-שנתית
-    // ממשיך תמיד להישען על בלוק התקציב לפי שנה, ולכן תגיתו ממשיכה לתלות בסינון סוג מפעיל כמו קודם.
-    if (isAllYears) {
-      tagMS.className = "tag verified"; tagMS.textContent = "✓ מאומת"; tagMS.removeAttribute("data-tt");
-    } else if (st.optype === "all") {
+    if (st.optype === "all") {
       tagMS.className = "tag verified"; tagMS.textContent = "✓ מאומת"; tagMS.removeAttribute("data-tt");
     } else {
       tagMS.className = "tag estimate"; tagMS.textContent = "≈ אמדן"; tagMS.setAttribute("data-tt", optypeCaveat);
@@ -1559,9 +1536,8 @@ function initApp() {
     } else {
       tagTrend.className = "tag estimate"; tagTrend.textContent = "≈ אמדן"; tagTrend.setAttribute("data-tt", optypeCaveat);
     }
-    document.getElementById("srcMinistrySplit").innerHTML = isAllYears
-      ? "<b>מקור:</b> סכימת 239 השירותים, מפתח לרכש חברתי, נשלף 22.09.2026."
-      : "<b>מקור:</b> סדרת התקציב המאושר לרכש חברתי, לפי משרד ושנה (⁦2017–2025⁩), מייצוא נתונים מאתר מפתח לרכש חברתי, 15.09.2026.";
+    document.getElementById("srcMinistrySplit").innerHTML =
+      "<b>מקור:</b> סדרת התקציב המאושר לרכש חברתי, לפי משרד ושנה (⁦2017–2025⁩), מייצוא נתונים מאתר מפתח לרכש חברתי, 15.09.2026.";
 
     // תרשים המגמה מציג תמיד את הטווח המלא (2017–2025), ואינו תלוי בסרגל השנים של תרשים ההתפלגות
     // הסמוך: מטרתו להראות מגמה רב-שנתית, ולכן צמצום הטווח שלו עצמו היה סותר את התכלית שלו.
