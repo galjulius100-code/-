@@ -1754,6 +1754,12 @@ function initApp() {
     var splitTopLevelTotals = aggregateExemptNested(EXEMPT_BY_TOPLEVEL, exemptYears, st.ministry);
     delete splitTopLevelTotals["כוונת התקשרות"];
     delete splitTopLevelTotals["מיזם ללא כוונת רווח"];
+    // מימוש זכות ברירה (אופציה) מוסר גם כאן, לא רק מתרשים העילות: מדובר במימוש סעיף מתוך מכרז
+    // קיים שכבר הוכרע בעבר, לא בהתקשרות עצמאית חדשה, ולכן אינו נספר כ"פטור ממכרז" בפילוח הזה.
+    var optionGroundTotals = aggregateExemptNested(EXEMPT_BY_GROUND, exemptYears, st.ministry);
+    EXCLUDED_GROUNDS.forEach(function (g) {
+      if (optionGroundTotals[g]) splitTopLevelTotals["פטור ממכרז"] = (splitTopLevelTotals["פטור ממכרז"] || 0) - optionGroundTotals[g];
+    });
     var splitTenderCnt = tenderCount(exemptYears, st.ministry);
     splitTopLevelTotals["מכרז פומבי"] = splitTenderCnt;
     var topLevel = countsToChart(splitTopLevelTotals);
@@ -1761,7 +1767,7 @@ function initApp() {
       [cssVar("--s1"), cssVar("--s2"), cssVar("--s3"), cssVar("--s4")].slice(0, topLevel.labels.length),
       "legendExemptSplit", topLevel.counts.map(function (n) { return n + " רשומות"; }));
     var splitTotal = Object.keys(splitTopLevelTotals).reduce(function (s, k) { return s + splitTopLevelTotals[k]; }, 0);
-    document.getElementById("exemptSplitSrc").textContent = "מקור: ייצוא מנהל הרכש הממשלתי, 28.10.2026 — שני קבצים: מכרזים פומביים ורשומות פטור. מבוסס על " + fmtInt(splitTotal) + " רשומות בסינון הנוכחי. רשומות \"כוונת התקשרות\" ו\"מיזם ללא כוונת רווח\" אינן נכללות, בהיותן פרסום מקדים ולא התקשרות שהושלמה.";
+    document.getElementById("exemptSplitSrc").textContent = "מקור: ייצוא מנהל הרכש הממשלתי, 28.10.2026 — שני קבצים: מכרזים פומביים ורשומות פטור. מבוסס על " + fmtInt(splitTotal) + " רשומות בסינון הנוכחי. רשומות \"כוונת התקשרות\" ו\"מיזם ללא כוונת רווח\" אינן נכללות, בהיותן פרסום מקדים ולא התקשרות שהושלמה; רשומות שעילתן \"מימוש זכות ברירה (אופציה)\" אינן נכללות אף הן, בהיותן מימוש סעיף מתוך מכרז קיים ולא התקשרות עצמאית.";
 
     var groundTotalsObj = aggregateExemptNested(EXEMPT_BY_GROUND, exemptYears, st.ministry);
     EXCLUDED_GROUNDS.forEach(function (k) { delete groundTotalsObj[k]; });
