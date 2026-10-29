@@ -841,6 +841,12 @@ function initApp() {
     var totals = aggregateExemptNested(EXEMPT_BY_GROUND, years, ministry);
     return CONTINUATION_GROUNDS.reduce(function (s, k) { return s + (totals[k] || 0); }, 0);
   }
+  // מימוש זכות ברירה (אופציה) הוא במהותו מימוש סעיף מתוך מכרז קיים שכבר הוכרע, לא התקשרות עצמאית
+  // חדשה ולא פטור בפני עצמו, ולכן מופחת מכל ספירת רשומות פטור בדשבורד, לא רק מתרשימי העילות.
+  function optionExerciseCount(years, ministry) {
+    var totals = aggregateExemptNested(EXEMPT_BY_GROUND, years, ministry);
+    return EXCLUDED_GROUNDS.reduce(function (s, k) { return s + (totals[k] || 0); }, 0);
+  }
   // אחוז רשומות פטור שעילתן "מיזם משותף" מתוך סך רשומות הפטור באותה שנה ומשרד — אותה שיטת
   // חישוב המשמשת את D.soleSupplier (עילה חלקי סך הכל מ-EXEMPT_BY_TOPLEVEL), מחושבת ישירות
   // מהנתונים הגולמיים ולא כערך קבוע מראש.
@@ -1711,7 +1717,7 @@ function initApp() {
   function renderS2KPIs() {
     var st = state(), years = s2KpiYearFilter.get(), ylabel = yearsLabel(years);
     var container = document.getElementById("s2-kpis"); container.innerHTML = "";
-    var exemptCount = exemptTotalCount(EXEMPT_BY_TOPLEVEL, years, st.ministry);
+    var exemptCount = exemptTotalCount(EXEMPT_BY_TOPLEVEL, years, st.ministry) - optionExerciseCount(years, st.ministry);
     var exemptAmount = exemptAmountSum(years, st.ministry);
     var tenderCnt = tenderCount(years, st.ministry);
     var continuationCnt = exemptContinuationCount(years, st.ministry);
@@ -1720,7 +1726,7 @@ function initApp() {
     var continuationSharePct = exemptCount > 0 ? (continuationCnt / exemptCount) * 100 : 0;
 
     container.appendChild(kpiTile("סך רשומות פטור (" + ylabel + ")", fmtInt(exemptCount), "רשומות", null, null, "verified",
-      "ספירה אמיתית של רשומות פטור, אחרי סינון משרד/זרוע, סטטוס השלמה, וסיווג תוכן חברתי מול לא-חברתי, ייצוא מנהל הרכש הממשלתי, 28.10.2026.",
+      "ספירה אמיתית של רשומות פטור, אחרי סינון משרד/זרוע, סטטוס השלמה, וסיווג תוכן חברתי מול לא-חברתי, ייצוא מנהל הרכש הממשלתי, 28.10.2026. אינה כוללת רשומות שעילתן \"מימוש זכות ברירה (אופציה)\", בהיותן מימוש סעיף מתוך מכרז קיים ולא התקשרות עצמאית.",
       "מספר ההתקשרויות שבוצעו ללא מכרז תחרותי פומבי, מכל הסיבות המותרות בדין, בטווח השנים שנבחר."));
 
     var exemptAmountParts = formatBillionsParts(exemptAmount / 1e9);
