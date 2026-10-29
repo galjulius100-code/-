@@ -1196,7 +1196,7 @@ function initApp() {
         // ייצרו גובה עצום ביחס לתוכן שלהם (כמה קווים וטיפת תוויות).
         aspectRatio: opts.aspectRatio,
         plugins: {
-          legend: { display: series.length > 1 && !opts.hideLegend, rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 8 } },
+          legend: { display: series.length > 1 && !opts.hideLegend, rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 6, boxHeight: 6 } },
           tooltip: { rtl: true, callbacks: { label: function (c) {
             var label = c.dataset.label || "";
             var val = c.parsed && c.parsed.y != null ? c.parsed.y : c.parsed;
@@ -1294,7 +1294,7 @@ function initApp() {
         aspectRatio: opts.aspectRatio,
         layout: opts.valueLabels && opts.horizontal ? { padding: { left: 4, right: opts.valueLabelPadding || 82 } } : undefined,
         plugins: {
-          legend: { display: series.length > 1 && !opts.hideLegend, rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 8 } },
+          legend: { display: series.length > 1 && !opts.hideLegend, rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 6, boxHeight: 6 } },
           tooltip: { rtl: true, callbacks: { label: function (c) {
             var label = c.dataset.label || "";
             var val = c.parsed && (opts.horizontal ? c.parsed.x : c.parsed.y);
