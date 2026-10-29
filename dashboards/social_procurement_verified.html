@@ -1329,7 +1329,9 @@ function initApp() {
                 : opts.horizontal && opts.scaleBillions ? { display: true, text: "מיליארדי ש״ח", color: cssVar("--text-muted"), font: { size: 13.5 } }
                 : undefined },
           y: { grid: opts.horizontal ? { display: false } : baseGrid(), max: !opts.horizontal ? opts.max : undefined,
-              ticks: !opts.horizontal && opts.scaleMillions
+              // opts.categoryFontSize: מקטין את גופן תוויות הציר הקטגוריאלי (שמות העילות/השירותים
+              // בצד שמאל של תרשים אופקי), כשהתוויות ארוכות מכדי להיכנס בנוחות בגודל הגופן הרגיל.
+              ticks: Object.assign({}, !opts.horizontal && opts.scaleMillions
                 ? Object.assign({}, baseTicks(), { callback: function (v) { return fmt(v / 1e6, 0); } })
                 : !opts.horizontal && opts.scaleBillions
                 ? Object.assign({}, baseTicks(), { callback: function (v) { return fmt(v / 1e9, 1); } })
@@ -1342,7 +1344,7 @@ function initApp() {
                     var full = this.getLabelForValue(v);
                     return full && full.length > opts.truncateAxisLabels ? full.slice(0, opts.truncateAxisLabels) + "…" : full;
                   } })
-                : baseTicks(),
+                : baseTicks(), opts.horizontal && opts.categoryFontSize ? { font: { size: opts.categoryFontSize } } : null),
               title: !opts.horizontal && opts.scaleMillions ? { display: true, text: "מיליוני ש״ח", color: cssVar("--text-muted"), font: { size: 13.5 } }
                 : !opts.horizontal && opts.percentUnit ? { display: true, text: "אחוז שינוי לעומת השנה הקודמת", color: cssVar("--text-muted"), font: { size: 13.5 } }
                 : undefined }
@@ -1814,7 +1816,7 @@ function initApp() {
       return GROUND_REGULATION[l] ? base + " — " + GROUND_REGULATION[l] : base;
     });
     makeBar("chartExemptGrounds", ground.labels, [{ label: "מספר רשומות", data: ground.counts, color: groundWarmPalette.slice(0, ground.labels.length) }],
-      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230 });
+      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, categoryFontSize: 11.5 });
 
     var yrs = [2020,2021,2022,2023,2024,2025]; // 2026 טרם הסתיימה, ראו מדיניות ליד הגדרת YEARS
     var contSeries, soleSeries, jointSeries;
