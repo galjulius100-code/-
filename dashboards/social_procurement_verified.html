@@ -171,6 +171,10 @@ thead th.sort-active{color:var(--accent)}
 .sort-ind{display:inline-block;margin-inline-start:4px;font-size:13px;line-height:1;color:var(--accent);opacity:.75}
 thead th.sortable:hover .sort-ind{opacity:1}
 .sort-ind.active{opacity:1;font-size:12px;color:var(--accent)}
+.pareto-badges{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.pareto-badge{flex:1;min-width:140px;background:var(--surface-2);border:1px solid var(--accent);border-radius:10px;padding:8px 12px;text-align:center}
+.pareto-badge .num{font-size:21px;font-weight:800;color:var(--accent);line-height:1.2}
+.pareto-badge .sub{font-size:11.5px;color:var(--text-secondary);line-height:1.4;margin-top:2px}
 tbody tr{border-bottom:1px solid var(--grid)}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--surface-hover)}
@@ -288,6 +292,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
         <div class="card-head"><div><div class="card-title">ריכוזיות תקציבית בין שירותים (עקומת פארטו)</div>
         <div class="card-sub">התרשים בא לבדוק אם תקציב הרכש החברתי מרוכז במספר קטן של שירותים גדולים, או מפוזר על פני שירותים רבים וקטנים — שאלה מדיניותית חשובה, כי ריכוזיות גבוהה מגדילה את הרגישות התקציבית לשינויים בשירות בודד. עקומת פארטו: השירותים בכל משרד מדורגים בסדר יורד לפי תקציב, וכל נקודה על העקומה מציגה את שיעור התקציב המצטבר עד לאותו דירוג, מחושב מתוך תקציב אותו משרד בלבד — כך שהנקודה מעל הערך 5 בעקומת משרד נתון משקפת את חלקם של חמשת השירותים בעלי התקציב הגבוה ביותר באותו משרד מתוך סך הרכש שלו, ולא ממוצע או חלוקה שווה בין השירותים. לצד עקומת "כל המשרדים" המשולבת (כלל 239 השירותים יחד) מוצגת עקומה נפרדת לכל אחד משלושת המשרדים, כדי שניתן יהיה להשוות את מידת הריכוזיות ביניהם. שיפוע תלול בתחילת עקומה מעיד על ריכוזיות תקציבית גבוהה במספר מצומצם של שירותים; עלייה מתונה לאורך כל הטווח מעידה על פיזור רחב יותר.</div></div>
         <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="מיון 239 השירותים לפי תקציב בסדר יורד וסכימה מצטברת. עקומת פארטו בודקת עד כמה הרכש מרוכז במספר קטן של שירותים גדולים, לעומת פיזור רחב על פני שירותים רבים וקטנים. ממצא: שירות בודד (הגדול ביותר) מהווה כחמישית מכלל הרכש, וחמישה עשר שירותים בלבד (מתוך 239) מהווים כארבע חמישיות ממנו — ריכוזיות גבוהה המוסברת בהמשך הכרטיס.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartPareto" data-export-name="ריכוזיות תקציבית - עקומת פארטו" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
+        <div class="pareto-badges" id="paretoMilestones"></div>
         <canvas id="chartPareto" height="200"></canvas>
         <div style="font-size:11.5px;color:var(--accent);font-weight:600;margin-top:8px;line-height:1.6">ריכוזיות תקציבית גבוהה בקרב מספר מצומצם של שירותים אינה ליקוי בניהול התקציבי. היא נובעת בעיקר מהבדלי עלות מבניים בין סוגי השירותים: מסגרות חוץ-ביתיות ואשפוזיות, כגון פנימיות והוסטלים, יקרות משמעותית לנפש בהשוואה לשירותים קהילתיים המשרתים אוכלוסייה רחבה יותר.</div>
         <div class="src">מקור: 239 שירותים, מפתח לרכש חברתי. ציר ה-X מוצג עד דירוג 100 בלבד (לא עד 239), כדי למקד בטווח שבו העקומה עדיין עולה בשיפוע משמעותי. שימו לב: הורדת הנתונים לאקסל של תרשים זה כוללת רק את 100 הדירוגים המוצגים, לא את כל 239 השירותים.</div>
@@ -1297,6 +1302,33 @@ function initApp() {
         c.restore();
       }
     };
+    // opts.vLines: קווי ציון אנכיים קבועים (למשל "15 שירותים → 80% מהתקציב"), לעקומות מצטברות
+    // כמו פארטו וריכוזיות — כדי שלא יהיה צורך "לתרגם" את העקומה בעין אל ציר ה-X, אלא לראות ישירות
+    // את נקודת הדירוג המבוקשת מסומנת וכתובה על גבי התרשים עצמו.
+    var vLinePlugin = {
+      id: "vLines-" + canvasId,
+      afterDraw: function (chart) {
+        if (!opts.vLines) return;
+        var c = chart.ctx, area = chart.chartArea, xScale = chart.scales.x;
+        c.save(); c.setLineDash([4, 4]); c.lineWidth = 1.5; c.strokeStyle = cssVar("--accent");
+        c.font = "700 12.5px system-ui, sans-serif"; c.direction = "ltr";
+        opts.vLines.forEach(function (ln) {
+          var x = xScale.getPixelForValue(ln.rank);
+          if (x < area.left || x > area.right) return;
+          c.beginPath(); c.moveTo(x, area.top); c.lineTo(x, area.bottom); c.stroke();
+          var tw = c.measureText(ln.label).width;
+          // התווית נצמדת לימין קו הסימון כברירת מחדל, ועוברת לשמאלו כשאין מקום עד קצה האזור —
+          // כדי שלא תיחתך מחוץ לתרשים בקו הסימון הימני ביותר.
+          var onRight = x + tw + 16 <= area.right;
+          var lx = onRight ? x + 6 : x - 6;
+          c.fillStyle = cssVar("--surface-1");
+          c.fillRect(onRight ? lx - 2 : lx - tw - 2, area.top + 2, tw + 8, 18);
+          c.fillStyle = cssVar("--accent"); c.textAlign = onRight ? "left" : "right";
+          c.fillText(ln.label, lx, area.top + 16);
+        });
+        c.restore();
+      }
+    };
     charts[canvasId] = new Chart(ctx, {
       type: "line",
       data: { labels: labels, datasets: series.map(function (s) {
@@ -1335,7 +1367,7 @@ function initApp() {
                title: opts.yTitle ? { display: true, text: opts.yTitle, color: cssVar("--text-muted"), font: { size: 13.5 } } : undefined }
         }
       },
-      plugins: [pointLabelPlugin]
+      plugins: [pointLabelPlugin, vLinePlugin]
     });
     // ראו ההערה המקבילה ב-makeBar/makeDonut: עמודת/עמודות נתון נוסף להורדה לאקסל — כאן בעיקר
     // לערכים המוצגים כתווית נקודה על הקו (pointLabels, למשל קצב שינוי שנתי) שאינם חלק מה-dataset.
@@ -1977,8 +2009,25 @@ function initApp() {
       paretoSeries.push({ label: m.label, color: cssVar(m.color.replace("var(", "").replace(")", "")),
         data: paretoLabels.map(function (_, i) { return i < pts.length ? pts[i] : null; }) });
     });
+    // מתרגם את העקומה המצטברת (שדורשת לעקוב בעין בין שני הצירים) לכמה עובדות קונקרטיות שאפשר
+    // לקלוט במבט אחד: "כמה שירותים מספיקים כדי לכסות X% מהתקציב" — ישירות לשאלת המדיניות שהעקומה
+    // נועדה לענות עליה, בלי תיווך גרפי. מסומן גם כקו אנכי מקביל על גבי התרשים עצמו (opts.vLines).
+    function paretoRankForThreshold(pts, threshold) {
+      for (var i = 0; i < pts.length; i++) { if (pts[i] >= threshold) return i + 1; }
+      return null;
+    }
+    var paretoMilestoneDefs = [50, 80, 95];
+    var paretoMilestones = paretoMilestoneDefs.map(function (th) {
+      return { threshold: th, rank: paretoRankForThreshold(paretoAllPts, th) };
+    }).filter(function (m) { return m.rank != null; });
+    document.getElementById("paretoMilestones").innerHTML = paretoMilestones.map(function (m) {
+      return '<div class="pareto-badge"><div class="num">' + fmtInt(m.rank) + '</div><div class="sub">שירותים (מתוך ' + fmtInt(paretoAllSorted.length) + ') מכסים ' + m.threshold + '% מהתקציב</div></div>';
+    }).join("");
+    var paretoVLines = paretoMilestones.map(function (m) {
+      return { rank: m.rank, label: m.rank + " ← " + m.threshold + "%" };
+    });
     makeLine("chartPareto", paretoLabels, paretoSeries,
-      { yMax: 100, min: 10, beginAtZero: false, percentUnit: true, densePoints: true, xTitle: "מספר השירותים הגדולים ביותר שנכללים", yTitle: "אחוז מצטבר מסך הרכש", aspectRatio: 2.6 });
+      { yMax: 100, min: 10, beginAtZero: false, percentUnit: true, densePoints: true, xTitle: "מספר השירותים הגדולים ביותר שנכללים", yTitle: "אחוז מצטבר מסך הרכש", aspectRatio: 2.6, vLines: paretoVLines });
 
 
     renderTopServicesTable();
