@@ -338,7 +338,8 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
         <div class="card-sub">כל התקשרות הפטורה ממכרז חייבת להסתמך על עילה קבועה בדין, המעוגנת בתקנות חובת המכרזים, התשנ״ג-1993. לצד שם כל עילה מצוין גם מספר התקנה המדויק שבה היא מעוגנת, כפי שאומת ישירות מול שדה "תקנה" בקובץ הגולמי של מנהל הרכש</div></div>
         <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="מקור: ייצוא מנהל הרכש הממשלתי, 28.10.2026, אותו קובץ העילות העומד גם בבסיס תרשימי ההמשכיות וספק יחיד הסמוכים. שימו לב: קובץ המקור כולל את כלל הרכש של המשרד ולא רק רכש חברתי; ראו הסבר ההיקף בפתיח המדור. כל התקשרות הפטורה ממכרז חייבת להסתמך על עילה קבועה בדין, המעוגנת בתקנות חובת המכרזים. מספרי התקנה שליד כל עילה אומתו ישירות מול רשומות בקובץ הגולמי (לדוגמה: ספק יחיד — תקנה 3(29); מיזם משותף — תקנה 3(30); רשות מקומית — תקנה 3(16); התקשרות דחופה — תקנה 3(2); המשך התקשרות — תקנה 3(4)(ב), עם פילוח נפרד לכל אחד משלושת תתי-הסעיפים (1), (2) ו-(3)). עילת 'אחר' הושארה בלי מספר תקנה, בהיותה קטגוריית שארית שכל אחת מתתי-העילות שבה מופיעה פחות מעשרים פעם. 'מימוש זכות ברירה (אופציה)' הוסרה מרשימת העילות: לפי בדיקה מול הוראות התכ\"ם, מימוש אופציה אינו עילת פטור עצמאית אלא המשך של התקשרות שאושרה כבר בעבר — למרות שבפועל זו העילה השכיחה ביותר בקובץ הגולמי (כמעט מחצית מהרשומות). שלוש עילות נוספות הוסרו לאחר בדיקת הרשומות בפועל: תאגיד שהוקם בחוק וסוכנות יהודית/הסתדרות, שעסקו בתוכניות תרבות ומורשת ציונית בתפוצות ולא ברכש חברתי (למרות תקפותן המשפטית כעילת פטור), והשכלה או הכשרה מקצועית, המעוגנת בתקנה 5 השונה מהותית מתקנה 3 ועוסקת במסלול תחרותי מצומצם ולא בפטור מלא.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartExemptGrounds" data-export-name="פילוח לפי עילת הפטור" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
         <canvas id="chartExemptGrounds" height="230"></canvas>
-        <div class="src">מקור: ייצוא מנהל הרכש הממשלתי, 28.10.2026. ספירת רשומות פטור לפי שדה העילה המדויק שצוין בכל רשומה; תשע עילות ייעודיות מוצגות, פרט לקטגוריית 'אחר' ול'מימוש זכות ברירה (אופציה)' שאינה עילת פטור עצמאית.</div>
+        <div class="src">מקור: ייצוא מנהל הרכש הממשלתי, 28.10.2026. ספירת רשומות פטור לפי שדה העילה המדויק שצוין בכל רשומה; תשע עילות ייעודיות מוצגות, פרט לקטגוריית 'אחר' ול'מימוש זכות ברירה (אופציה)' שאינה עילת פטור עצמאית. ריחוף מעל עילה מציג את מגמתה השנתית.</div>
+        <div class="hover-pop" id="groundHoverPop"><div class="hover-pop-title" id="groundHoverPopTitle"></div><canvas id="chartGroundHoverMini" height="220"></canvas></div>
       </div>
       </div>
     </div>
@@ -861,6 +862,20 @@ function initApp() {
       });
     });
     return total;
+  }
+  // מגמת עילת פטור נתונה לאורך שנים, מצטברת על פני משרדי הסינון הנוכחי — משמשת את עוגת/תרשים
+  // הריחוף ליד תרשים "פילוח לפי עילת הפטור", תמיד על פני כל טווח השנים (2020-2025) בלי קשר
+  // לבחירת תת-טווח השנים הספציפית של אותו תרשים, כדי שהריחוף תמיד יראה את ההקשר הרב-שנתי המלא.
+  function groundYearTrend(groundKey, ministry) {
+    var yrs = [2020, 2021, 2022, 2023, 2024, 2025];
+    return yrs.map(function (y) {
+      var sum = 0;
+      ministriesInScope(ministry).forEach(function (mKey) {
+        var row = EXEMPT_BY_GROUND[mKey] && EXEMPT_BY_GROUND[mKey][y];
+        if (row && row[groundKey]) sum += row[groundKey];
+      });
+      return sum;
+    });
   }
   function tenderCount(years, ministry) {
     var total = 0;
@@ -1569,6 +1584,64 @@ function initApp() {
     canvas.addEventListener("mouseleave", hide);
   }
 
+  // ריחוף מעל עמודת עילה בתרשים "פילוח לפי עילת הפטור" מציג תרשים קו צף של מגמת אותה עילה
+  // לאורך 2020-2025 (תמיד כל טווח השנים, בלי קשר לתת-הטווח שנבחר בסרגל השנים הסמוך של התרשים
+  // עצמו), כדי שהריחוף תמיד יראה את ההקשר הרב-שנתי המלא בלי תלות בסינון הנקודתי.
+  function wireGroundHover() {
+    var canvas = document.getElementById("chartExemptGrounds");
+    if (!canvas || canvas._hoverWired) return;
+    canvas._hoverWired = true;
+    var pop = document.getElementById("groundHoverPop");
+    var popTitle = document.getElementById("groundHoverPopTitle");
+    var lastKey = null;
+    function hide() { pop.style.display = "none"; lastKey = null; }
+    canvas.addEventListener("mousemove", function (e) {
+      var chart = charts["chartExemptGrounds"];
+      if (!chart) { hide(); return; }
+      var els = chart.getElementsAtEventForMode(e, "nearest", { intersect: true }, false);
+      if (!els.length) { hide(); return; }
+      var idx = els[0].index;
+      var groundKey = chart.data.labels[idx];
+      if (!groundKey) { hide(); return; }
+      if (lastKey !== groundKey) {
+        lastKey = groundKey;
+        var st = state();
+        var trendData = groundYearTrend(groundKey, st.ministry);
+        popTitle.textContent = groundKey + " — מגמה שנתית";
+        destroyIf("chartGroundHoverMini");
+        var miniCtx = document.getElementById("chartGroundHoverMini").getContext("2d");
+        charts["chartGroundHoverMini"] = new Chart(miniCtx, {
+          type: "line",
+          data: { labels: [2020, 2021, 2022, 2023, 2024, 2025], datasets: [{ data: trendData, borderColor: cssVar("--accent"), backgroundColor: cssVar("--accent"), tension: .3, pointRadius: 4, pointHoverRadius: 4 }] },
+          options: {
+            aspectRatio: 1.9, animation: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: cssVar("--text-secondary"), font: { size: 12.5 } } },
+              y: { beginAtZero: true, grid: { color: cssVar("--grid") }, ticks: { color: cssVar("--text-secondary"), font: { size: 12.5 }, precision: 0 } }
+            }
+          },
+          plugins: [{
+            id: "groundTrendLabels",
+            afterDatasetsDraw: function (c) {
+              var ctx = c.ctx, meta = c.getDatasetMeta(0);
+              ctx.save(); ctx.fillStyle = cssVar("--text-primary"); ctx.font = "700 13px system-ui, sans-serif"; ctx.textAlign = "center";
+              meta.data.forEach(function (pt, i) { ctx.fillText(fmtInt(trendData[i]), pt.x, pt.y - 10); });
+              ctx.restore();
+            }
+          }]
+        });
+      }
+      pop.style.display = "block";
+      var popW = pop.offsetWidth || 420, popH = pop.offsetHeight || 300;
+      var x = e.clientX + 16, y = e.clientY - popH - 16;
+      if (y < 8) y = e.clientY + 16;
+      if (x + popW > window.innerWidth - 8) x = e.clientX - popW - 16;
+      pop.style.left = x + "px"; pop.style.top = y + "px";
+    });
+    canvas.addEventListener("mouseleave", hide);
+  }
+
   /* ================= SCREEN 1 ================= */
   function renderS1KPIs() {
     var st = state(), years = s1KpiYearFilter.get(), latestYear = years[years.length - 1];
@@ -1913,6 +1986,7 @@ function initApp() {
     });
     makeBar("chartExemptGrounds", ground.labels, [{ label: "מספר רשומות", data: ground.counts, color: groundWarmPalette.slice(0, ground.labels.length) }],
       { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, categoryFontSize: 11.5 });
+    wireGroundHover();
 
     var yrs = [2020,2021,2022,2023,2024,2025]; // 2026 טרם הסתיימה, ראו מדיניות ליד הגדרת YEARS
     var contSeries, soleSeries, jointSeries;
