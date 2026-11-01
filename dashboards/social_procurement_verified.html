@@ -359,6 +359,15 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
       </div>
     </div>
 
+    <div class="card" style="margin-top:14px">
+      <div class="card-head"><div><div class="card-title">כיסוי פעיל — מספר רשומות פטור בתוקף בכל שנה</div>
+      <div class="card-sub">להבדיל מתרשימי העילות למעלה, הסופרים לפי שנת החתימה בלבד: כאן נספרת כל רשומה בכל שנה שבה חוזה הפטור שלה פעיל בפועל, כולל חוזים רב-שנתיים שנחתמו בשנה קודמת וממשיכים לחייב תקציב</div></div>
+      <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="לדוגמה, חוזה שנחתם ב-2021 לתקופה של חמש שנים נספר כאן בכל אחת מחמש השנים שבהן הוא בתוקף, ולא רק בשנת 2021 כפי שהוא נספר בתרשימי העילות. התרשים מבוסס על שדות תאריך תחילה ותאריך סיום התקופה בקובץ הגולמי, ולא על שדה עילת הפטור. 86 רשומות (3.8% מתוך 2,249) הוצאו מחישוב זה בלבד, בשל תאריך חסר או תאריך סיום שקדם לתאריך ההתחלה בקובץ המקור — פגם נתונים בקובץ עצמו, לא שגיאת עיבוד.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartExemptCoverage" data-export-name="כיסוי פעיל - רשומות פטור בתוקף" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
+      <canvas id="chartExemptCoverage" height="210"></canvas>
+      <div class="legend" id="legendExemptCoverage"></div>
+      <div class="src">מקור: ייצוא מנהל הרכש הממשלתי, 28.10.2026. רשומה נספרת כפעילה בשנה נתונה כאשר טווח תאריך ההתחלה–תאריך הסיום שלה חופף לאותה שנה; 2,163 מתוך 2,249 רשומות הפטור כוללות תאריכים תקינים ונכנסות לחישוב.</div>
+    </div>
+
     <div class="grid cols-2" style="margin-top:14px">
       <div class="card">
         <div class="card-head"><div><div class="card-title">עילת ״מיזם משותף״ — מגמה לפי משרד</div>
@@ -612,6 +621,11 @@ function initApp() {
   var EXEMPT_BY_TOPLEVEL = {"education": {"2020": {"פטור ממכרז": 114}, "2021": {"פטור ממכרז": 138}, "2022": {"פטור ממכרז": 148}, "2023": {"פטור ממכרז": 93}, "2024": {"פטור ממכרז": 96}, "2025": {"פטור ממכרז": 81}}, "health": {"2020": {"פטור ממכרז": 59}, "2021": {"פטור ממכרז": 68}, "2022": {"פטור ממכרז": 60}, "2023": {"פטור ממכרז": 50}, "2024": {"פטור ממכרז": 44}, "2025": {"פטור ממכרז": 51}}, "welfare": {"2020": {"פטור ממכרז": 228}, "2021": {"פטור ממכרז": 97}, "2022": {"פטור ממכרז": 194}, "2023": {"פטור ממכרז": 310}, "2024": {"פטור ממכרז": 231}, "2025": {"פטור ממכרז": 187}}};
   var EXEMPT_AMOUNT = {"education": {"2020": 2592656659, "2021": 1795498398, "2022": 1910624473, "2023": 547543905, "2024": 342487480, "2025": 528684035}, "health": {"2020": 136081876, "2021": 180906870, "2022": 266495044, "2023": 200416860, "2024": 76980029, "2025": 70434537}, "welfare": {"2020": 3308487785, "2021": 1670507808, "2022": 2667979991, "2023": 1752895082, "2024": 1133570879, "2025": 1607239963}};
   var TENDER_COUNT = {"welfare": {"2020": 35, "2021": 35, "2022": 31, "2023": 57, "2024": 61, "2025": 41}, "health": {"2020": 7, "2021": 6, "2022": 12, "2023": 21, "2024": 22, "2025": 13}, "education": {"2020": 32, "2021": 36, "2022": 62, "2023": 54, "2024": 43, "2025": 41}};
+  // EXEMPT_ACTIVE_COVERAGE: לכל שנה ומשרד, מספר רשומות הפטור שהיו בתוקף בפועל (טווח תאריך התחלה/סיום
+  // חופף לשנה) — להבדיל מ-EXEMPT_BY_TOPLEVEL שסופר לפי שנת החתימה בלבד. מבוסס על 2,163 מתוך 2,249
+  // רשומות הפטור; 86 רשומות (3.8%) הוצאו מחישוב זה בלבד בשל תאריך התחלה/סיום חסר או שגוי (תאריך סיום
+  // מוקדם מתאריך ההתחלה בקובץ המקור).
+  var EXEMPT_ACTIVE_COVERAGE = {"welfare": {"2020": 221, "2021": 181, "2022": 242, "2023": 428, "2024": 406, "2025": 283}, "health": {"2020": 57, "2021": 106, "2022": 99, "2023": 88, "2024": 78, "2025": 85}, "education": {"2020": 108, "2021": 178, "2022": 210, "2023": 174, "2024": 139, "2025": 144}};
   // "מימוש זכות ברירה (אופציה)" הוצאה מכאן ומכל שימוש אחר בעילות הפטור: לפי בדיקה מול הוראות
   // התכ"ם, מימוש אופציה אינו עילת פטור עצמאית אלא המשך של התקשרות שאושרה כבר בעבר. בשונה משאר
   // ההחרגות (שמוסרות רק מהתצוגה), "מימוש זכות ברירה" הוצאה כליל כבר בשלב בניית EXEMPT_BY_GROUND
@@ -1850,6 +1864,16 @@ function initApp() {
     makeLine("chartSole", yrs, soleSeries, { max: 80, percentUnit: true });
     document.getElementById("legendSole").innerHTML = MINISTRIES.filter(function(m){return st.ministry==="all"||m.key===st.ministry;}).map(function (m) {
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + soleSupplierStat(m.key, 2020).pct + "% ← " + soleSupplierStat(m.key, 2025).pct + "%</span>";
+    }).join("");
+
+    var coverageSeries = (st.ministry === "all" ? MINISTRIES : MINISTRIES.filter(function (x) { return x.key === st.ministry; })).map(function (m) {
+      return { label: m.label, color: cssVar(m.color.replace("var(", "").replace(")", "")),
+        data: yrs.map(function (y) { return (EXEMPT_ACTIVE_COVERAGE[m.key] || {})[y] || 0; }) };
+    });
+    makeLine("chartExemptCoverage", yrs, coverageSeries, {});
+    document.getElementById("legendExemptCoverage").innerHTML = MINISTRIES.filter(function(m){return st.ministry==="all"||m.key===st.ministry;}).map(function (m) {
+      var c2020 = (EXEMPT_ACTIVE_COVERAGE[m.key] || {})["2020"] || 0, c2025 = (EXEMPT_ACTIVE_COVERAGE[m.key] || {})["2025"] || 0;
+      return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + fmtInt(c2020) + " ← " + fmtInt(c2025) + " רשומות</span>";
     }).join("");
 
     makeLine("chartJoint", yrs, jointSeries, { max: 40, percentUnit: true });
