@@ -124,7 +124,7 @@ a{color:var(--accent)}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px}
 .card-title{font-size:15.5px;font-weight:700}
 .card-sub{font-size:14.5px;color:var(--text-muted);margin-top:3px;line-height:1.5}
-.hover-pop{position:fixed;z-index:80;pointer-events:none;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;width:420px}
+.hover-pop{position:fixed;z-index:80;pointer-events:none;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;width:560px}
 .hover-pop .hover-pop-title{font-size:14.5px;font-weight:700;color:var(--text-primary);margin-bottom:6px;text-align:center}
 .card-body{flex:1;min-width:0}
 .intro-note{background:var(--accent-soft);border-inline-start:3px solid var(--accent);border-radius:12px;
@@ -251,7 +251,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
       <canvas id="chartMinistrySplit" height="200"></canvas>
       <div class="legend" id="legendMinistrySplit"></div>
       <div class="src" id="srcMinistrySplit"></div>
-      <div class="hover-pop" id="ministryHoverPop"><div class="hover-pop-title" id="ministryHoverPopTitle"></div><canvas id="chartMinistryHoverMini" height="260"></canvas></div>
+      <div class="hover-pop" id="ministryHoverPop"><div class="hover-pop-title" id="ministryHoverPopTitle"></div><canvas id="chartMinistryHoverMini" height="340"></canvas></div>
       </div>
 
       <div class="card">
@@ -1395,6 +1395,14 @@ function initApp() {
           var r = (props.innerRadius + props.outerRadius) / 2;
           var lx = props.x + Math.cos(mid) * r, ly = props.y + Math.sin(mid) * r;
           var pctText = fmt(values[i], 0) + "%";
+          // opts.pctOnlyInside: האחוז תמיד נכתב בתוך הפרוסה עצמה, גם אם היא צרה מאוד — בלי תווית
+          // חיצונית עם קו מוביל ובלי סכום בכלל (הסכום מוצג כבר בכותרת/במקרא). שימושי כשרוצים תרשים
+          // "צפוף" שכולו קריא במבט אחד בתוך הטבעת, גם במחיר חפיפה קלה בפרוסות הצרות ביותר.
+          if (opts.pctOnlyInside) {
+            c.font = "700 13px system-ui, sans-serif";
+            c.fillText(pctText, lx, ly);
+            return;
+          }
           // תצוגה מקוצרת של מספר הרשומות (רק הספרה, בלי המילה "רשומות") לפרוסות שרחבות מספיק
           // לאחוז אך צרות מדי לטקסט המלא — כדי שגם הן יראו את המספר בתוך הפרוסה, לא רק את האחוז.
           var amountCompact = amountLabels[i] ? amountLabels[i].replace(/\s*רשומות\s*$/, "") : null;
@@ -1473,7 +1481,7 @@ function initApp() {
         layout: { padding: 24 },
         plugins: {
           legend: { display: false },
-          tooltip: { rtl: true, callbacks: { label: function (c) {
+          tooltip: opts.disableTooltip ? { enabled: false } : { rtl: true, callbacks: { label: function (c) {
             var pct = " " + c.label + ": " + ttIso(fmt(values[c.dataIndex], 1) + "%");
             return amountLabels ? pct + " (" + amountLabels[c.dataIndex] + ")" : pct;
           } } }
@@ -1483,11 +1491,13 @@ function initApp() {
     });
     if (legendElId) {
       var el = document.getElementById(legendElId);
-      // אחוז הפרוסה מוצג גם במקרא החיצוני, לא רק בתווית שבתוך הפרוסה עצמה בקנבס — כך שהוא לא נעלם
-      // בפרוסות צרות מדי לכיתוב פנימי, ונשאר קריא גם למי שמייצא רק את הטקסט מסביב לתרשים.
+      // opts.legendMinimal: המקרא מציג רק את שם הפרוסה, בלי אחוז/סכום — כשאלה כבר מוצגים בתוך
+      // הפרוסה עצמה (ראו opts.pctOnlyInside) ואין טעם לכפול אותם גם מתחת לתרשים.
+      // אחרת, אחוז הפרוסה מוצג גם במקרא החיצוני, לא רק בתווית שבתוך הפרוסה עצמה בקנבס — כך שהוא לא
+      // נעלם בפרוסות צרות מדי לכיתוב פנימי, ונשאר קריא גם למי שמייצא רק את הטקסט מסביב לתרשים.
       el.innerHTML = labels.map(function (l, i) {
         return '<span class="legend-item"><span class="legend-swatch" style="background:' + colors[i] + '"></span>' + l +
-          " — " + ttIso(fmt(values[i], 1) + "%") + (amountLabels && amountLabels[i] ? " (" + amountLabels[i] + ")" : "") + '</span>';
+          (opts.legendMinimal ? "" : " — " + ttIso(fmt(values[i], 1) + "%") + (amountLabels && amountLabels[i] ? " (" + amountLabels[i] + ")" : "")) + '</span>';
       }).join("");
     }
   }
@@ -1525,7 +1535,7 @@ function initApp() {
           id: "miniPct",
           afterDraw: function (chart) {
             var c = chart.ctx, meta = chart.getDatasetMeta(0);
-            c.save(); c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = "#ffffff"; c.font = "700 13px system-ui, sans-serif";
+            c.save(); c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = "#ffffff"; c.font = "700 15px system-ui, sans-serif";
             meta.data.forEach(function (arc, i) {
               var props = arc.getProps(["startAngle", "endAngle", "innerRadius", "outerRadius", "x", "y"], true);
               var angle = props.endAngle - props.startAngle;
@@ -1542,7 +1552,7 @@ function initApp() {
           options: {
             cutout: "55%", aspectRatio: 1.5, animation: false,
             plugins: {
-              legend: { display: true, position: "bottom", rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 9, boxHeight: 9, font: { size: 12 }, padding: 8 } },
+              legend: { display: true, position: "bottom", rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 10, boxHeight: 10, font: { size: 13.5 }, padding: 10 } },
               tooltip: { enabled: false }
             }
           },
@@ -1550,7 +1560,7 @@ function initApp() {
         });
       }
       pop.style.display = "block";
-      var popW = pop.offsetWidth || 420, popH = pop.offsetHeight || 380;
+      var popW = pop.offsetWidth || 560, popH = pop.offsetHeight || 480;
       var x = e.clientX + 16, y = e.clientY - popH - 16;
       if (y < 8) y = e.clientY + 16;
       if (x + popW > window.innerWidth - 8) x = e.clientX - popW - 16;
@@ -1639,7 +1649,8 @@ function initApp() {
       mAmounts = brk.amounts.map(function (a) { return formatBillions(a / 1e9); });
       titleMS.textContent = "התפלגות תקציב השירותים העיקריים — " + mm2.label;
     }
-    makeDonut("chartMinistrySplit", mLabels, mValues, mColors, "legendMinistrySplit", mAmounts);
+    makeDonut("chartMinistrySplit", mLabels, mValues, mColors, "legendMinistrySplit", mAmounts,
+      st.ministry === "all" ? { disableTooltip: true } : { disableTooltip: true, pctOnlyInside: true, legendMinimal: true });
     wireMinistryHover();
     var tagMS = document.getElementById("tagMinistrySplit");
     var tagTrend = document.getElementById("tagTrend");
