@@ -980,11 +980,13 @@ function initApp() {
   }
   function hideTT() { tt.style.opacity = 0; tt.style.pointerEvents = "none"; ttOwner = null; ttPinned = false; }
   document.addEventListener("mouseover", function (e) {
+    if (ttPinned) return; // חלונית נעוצה אינה מוחלפת על ידי ריחוף מקרי מעל הסבר אחר — רק לחיצה מחוץ לה סוגרת אותה
     var el = e.target.closest("[data-tt]"); if (!el) return;
     ttText.textContent = el.getAttribute("data-tt"); tt.style.opacity = 1; tt.style.pointerEvents = "auto"; ttOwner = el;
   });
   document.addEventListener("mousemove", function (e) {
     if (tt.style.opacity != "1") return;
+    if (ttPinned) return; // חלונית שנעוצה בהקשה נשארת במקומה, כדי שהעכבר יוכל לעבור את המרחק עד כפתור ההעתקה בלי שהיא תברח אחריו
     if (e.target === tt || tt.contains(e.target)) return; // בזמן שהעכבר נמצא מעל חלונית ההסבר עצמה (כדי להעתיק), אין להזיז אותה אחרי הסמן
     tt.style.left = Math.min(e.clientX + 14, window.innerWidth - 310) + "px";
     tt.style.top = Math.min(e.clientY + 14, window.innerHeight - 90) + "px";
@@ -1548,12 +1550,22 @@ function initApp() {
     canvas._hoverWired = true;
     var pop = document.getElementById("ministryHoverPop");
     var popTitle = document.getElementById("ministryHoverPopTitle");
-    var lastKey = null, hideTimer = null;
-    function hide() { pop.style.display = "none"; lastKey = null; }
-    function scheduleHide() { hideTimer = setTimeout(hide, 150); }
+    var lastKey = null, hideTimer = null, pinned = false;
+    function hide() { pop.style.display = "none"; lastKey = null; pinned = false; }
+    function scheduleHide() { if (pinned) return; hideTimer = setTimeout(hide, 150); }
     pop.addEventListener("mouseenter", function () { clearTimeout(hideTimer); });
-    pop.addEventListener("mouseleave", hide);
+    pop.addEventListener("mouseleave", function () { if (!pinned) hide(); });
+    // לחיצה על העוגה הצפה או על הכרטיס שמעורר אותה נועצת אותה פתוחה: כך אפשר להזיז את העכבר
+    // לתוך הכפתור להורדת הנתונים בלי שהעוגה תיעלם קודם. לחיצה בכל מקום אחר בדף סוגרת אותה.
+    pop.addEventListener("click", function (e) { e.stopPropagation(); });
+    canvas.addEventListener("click", function () { if (lastKey) pinned = true; });
+    document.addEventListener("click", function (e) {
+      if (!pinned) return;
+      if (canvas.contains(e.target) || pop.contains(e.target)) return;
+      hide();
+    });
     canvas.addEventListener("mousemove", function (e) {
+      if (pinned) return;
       clearTimeout(hideTimer);
       var st = state();
       if (st.ministry !== "all") { hide(); return; }
@@ -1617,12 +1629,21 @@ function initApp() {
     canvas._hoverWired = true;
     var pop = document.getElementById("splitHoverPop");
     var popTitle = document.getElementById("splitHoverPopTitle");
-    var lastKey = null, hideTimer = null;
-    function hide() { pop.style.display = "none"; lastKey = null; }
-    function scheduleHide() { hideTimer = setTimeout(hide, 150); }
+    var lastKey = null, hideTimer = null, pinned = false;
+    function hide() { pop.style.display = "none"; lastKey = null; pinned = false; }
+    function scheduleHide() { if (pinned) return; hideTimer = setTimeout(hide, 150); }
     pop.addEventListener("mouseenter", function () { clearTimeout(hideTimer); });
-    pop.addEventListener("mouseleave", hide);
+    pop.addEventListener("mouseleave", function () { if (!pinned) hide(); });
+    // כנ"ל: לחיצה נועצת את העוגה הצפה פתוחה כדי לאפשר להגיע לכפתור ההורדה, ולחיצה מחוץ לה סוגרת.
+    pop.addEventListener("click", function (e) { e.stopPropagation(); });
+    canvas.addEventListener("click", function () { if (lastKey) pinned = true; });
+    document.addEventListener("click", function (e) {
+      if (!pinned) return;
+      if (canvas.contains(e.target) || pop.contains(e.target)) return;
+      hide();
+    });
     canvas.addEventListener("mousemove", function (e) {
+      if (pinned) return;
       clearTimeout(hideTimer);
       var chart = charts["chartExemptSplit"];
       if (!chart) { hide(); return; }
