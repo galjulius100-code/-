@@ -124,7 +124,7 @@ a{color:var(--accent)}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px}
 .card-title{font-size:15.5px;font-weight:700}
 .card-sub{font-size:14.5px;color:var(--text-muted);margin-top:3px;line-height:1.5}
-.hover-pop{position:fixed;z-index:80;pointer-events:none;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;width:560px}
+.hover-pop{position:fixed;z-index:80;pointer-events:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;width:560px}
 .hover-pop .hover-pop-title{font-size:14.5px;font-weight:700;color:var(--text-primary);margin-bottom:6px;text-align:center}
 .card-body{flex:1;min-width:0}
 .intro-note{background:var(--accent-soft);border-inline-start:3px solid var(--accent);border-radius:12px;
@@ -185,7 +185,11 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
 
 #tt{position:fixed;z-index:200;background:var(--surface-2);color:var(--text-primary);font-size:12.5px;
   padding:9px 12px;border-radius:9px;max-width:320px;pointer-events:none;opacity:0;transition:opacity .12s;
-  line-height:1.55;box-shadow:var(--shadow);border:1px solid var(--card-border)}
+  line-height:1.55;box-shadow:var(--shadow);border:1px solid var(--card-border);display:flex;gap:8px;align-items:flex-start}
+#tt #ttText{flex:1}
+#tt #ttCopyBtn{flex:none;width:20px;height:20px;border-radius:5px;border:1px solid var(--card-border);background:var(--surface-1);
+  color:var(--text-secondary);font-size:11px;cursor:pointer;line-height:1}
+#tt #ttCopyBtn:hover{background:var(--surface-2)}
 
 .stage{font-size:9.5px;background:var(--frame-bg);color:var(--frame-fg);padding:1px 7px;border-radius:999px;margin-inline-start:6px;font-weight:700}
 .footer-note{margin-top:26px;font-size:12px;color:var(--text-muted);text-align:center;line-height:1.85}
@@ -251,7 +255,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
       <canvas id="chartMinistrySplit" height="200"></canvas>
       <div class="legend" id="legendMinistrySplit"></div>
       <div class="src" id="srcMinistrySplit"></div>
-      <div class="hover-pop" id="ministryHoverPop"><div class="hover-pop-title" id="ministryHoverPopTitle"></div><canvas id="chartMinistryHoverMini" height="340"></canvas></div>
+      <div class="hover-pop" id="ministryHoverPop"><div class="tag-row" style="justify-content:space-between"><div class="hover-pop-title" id="ministryHoverPopTitle"></div><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartMinistryHoverMini" data-export-name="פילוח שירותים לפי משרד" aria-label="הורדת נתוני התרשים הצף כקובץ אקסל" title="הורדת נתוני התרשים הצף כקובץ אקסל">⇩</button></div><canvas id="chartMinistryHoverMini" height="340"></canvas></div>
       </div>
 
       <div class="card">
@@ -331,7 +335,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
         <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="שימו לב: קובץ המקור כולל את כלל הרכש של המשרד ולא רק רכש חברתי; ראו הסבר ההיקף בפתיח המדור. שלושת סוגי ההליך לפי שדה 'סוג הליך' במקור: מכרז פומבי (מקובץ נפרד), ופטור ממכרז והסכם מסגרת (מקובץ הפטורים). שימו לב: זהו שדה נפרד מ'עילת הפטור' (למשל 'מיזם משותף') שבתרשים הסמוך — אין זיקה הכרחית בין השניים. רשומות 'כוונת התקשרות' אינן נכללות, בהיותן הודעה מקדימה בלבד; רשומות 'מיזם ללא כוונת רווח' אינן נכללות אף הן, לאחר שנמצא כי רובן המכריע נושא סטטוס 'טרם התקבלה החלטת ועדה' ולא סטטוס מאושר — כלומר פרסום שטרם הבשיל להתקשרות, ולא התקשרות בפני עצמה.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartExemptSplit" data-export-name="פילוח סוגי ההתקשרויות" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
         <canvas id="chartExemptSplit" height="200"></canvas>
         <div class="legend" id="legendExemptSplit"></div>
-        <div class="hover-pop" id="splitHoverPop"><div class="hover-pop-title" id="splitHoverPopTitle"></div><canvas id="chartSplitHoverMini" height="220"></canvas></div>
+        <div class="hover-pop" id="splitHoverPop"><div class="tag-row" style="justify-content:space-between"><div class="hover-pop-title" id="splitHoverPopTitle"></div><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartSplitHoverMini" data-export-name="פילוח לפי משרד" aria-label="הורדת נתוני התרשים הצף כקובץ אקסל" title="הורדת נתוני התרשים הצף כקובץ אקסל">⇩</button></div><canvas id="chartSplitHoverMini" height="220"></canvas><div class="legend" id="legendSplitHoverMini"></div></div>
         <div class="src" id="exemptSplitSrc"></div>
       </div>
       <div class="card">
@@ -464,7 +468,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
 
 </div>
 
-<div id="tt"></div>
+<div id="tt"><span id="ttText"></span><button type="button" id="ttCopyBtn" aria-label="העתק את הטקסט" title="העתק את הטקסט">⧉</button></div>
 
 <script>
 /*!
@@ -978,27 +982,36 @@ function initApp() {
   /* ================= TOOLTIP ================= */
   // נגישות: ריחוף עכבר בלבד לא נגיש במגע (טלפון) ולא במקלדת, לכן מתווספים כאן גם מיקוד וגם הקשה/לחיצה.
   var tt = document.getElementById("tt");
-  var ttOwner = null;
+  var ttText = document.getElementById("ttText");
+  var ttCopyBtn = document.getElementById("ttCopyBtn");
+  var ttOwner = null, ttPinned = false;
   function showTT(el, anchorRect) {
-    tt.textContent = el.getAttribute("data-tt"); tt.style.opacity = 1; ttOwner = el;
+    ttText.textContent = el.getAttribute("data-tt"); tt.style.opacity = 1; tt.style.pointerEvents = "auto"; ttOwner = el;
     if (anchorRect) {
       tt.style.left = Math.min(anchorRect.left, window.innerWidth - 310) + "px";
       tt.style.top = Math.min(anchorRect.bottom + 8, window.innerHeight - 90) + "px";
     }
   }
-  function hideTT() { tt.style.opacity = 0; ttOwner = null; }
+  function hideTT() { tt.style.opacity = 0; tt.style.pointerEvents = "none"; ttOwner = null; ttPinned = false; }
   document.addEventListener("mouseover", function (e) {
     var el = e.target.closest("[data-tt]"); if (!el) return;
-    tt.textContent = el.getAttribute("data-tt"); tt.style.opacity = 1;
+    ttText.textContent = el.getAttribute("data-tt"); tt.style.opacity = 1; tt.style.pointerEvents = "auto"; ttOwner = el;
   });
   document.addEventListener("mousemove", function (e) {
     if (tt.style.opacity != "1") return;
+    if (e.target === tt || tt.contains(e.target)) return; // בזמן שהעכבר נמצא מעל חלונית ההסבר עצמה (כדי להעתיק), אין להזיז אותה אחרי הסמן
     tt.style.left = Math.min(e.clientX + 14, window.innerWidth - 310) + "px";
     tt.style.top = Math.min(e.clientY + 14, window.innerHeight - 90) + "px";
   });
   document.addEventListener("mouseout", function (e) {
-    if (e.target.closest("[data-tt]")) tt.style.opacity = 0;
+    // לא לסגור אם העכבר עובר מהרכיב המקורי אל חלונית ההסבר עצמה (כדי לאפשר להגיע לכפתור ההעתקה),
+    // ולא לסגור חלונית שנעוצה בהקשה (ttPinned) רק כי העכבר יצא זמנית.
+    if (!e.target.closest("[data-tt]")) return;
+    if (ttPinned) return;
+    if (e.relatedTarget && tt.contains(e.relatedTarget)) return;
+    tt.style.opacity = 0; tt.style.pointerEvents = "none";
   });
+  tt.addEventListener("mouseleave", function () { if (!ttPinned) hideTT(); });
   var ttJustFocused = false;
   document.addEventListener("focusin", function (e) {
     var el = e.target.closest("[data-tt]"); if (!el) return;
@@ -1006,16 +1019,30 @@ function initApp() {
     ttJustFocused = true;
   });
   document.addEventListener("focusout", function (e) {
-    if (e.target.closest("[data-tt]")) hideTT();
+    if (e.target.closest("[data-tt]") && !ttPinned) hideTT();
   });
   document.addEventListener("click", function (e) {
+    if (e.target === ttCopyBtn || tt.contains(e.target)) return;
     var el = e.target.closest("[data-tt]");
     if (!el) { if (ttOwner) hideTT(); return; }
     // רכיבים ממוקדים (למשל כפתור ה-i) מקבלים פוקוס באותה הקשה עצמה, שכבר פותחת את ההסבר —
     // בלי השמירה הזו, אירוע ה-click שבא מיד אחרי focusin היה סוגר אותו באותה הקשה.
-    if (ttJustFocused) { ttJustFocused = false; return; }
-    if (ttOwner === el) { hideTT(); return; }
+    if (ttJustFocused) { ttJustFocused = false; ttPinned = true; return; }
+    if (ttOwner === el && ttPinned) { hideTT(); return; }
     showTT(el, el.getBoundingClientRect());
+    ttPinned = true;
+  });
+  ttCopyBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    var text = ttText.textContent;
+    var done = function () {
+      var prev = ttCopyBtn.textContent;
+      ttCopyBtn.textContent = "✓";
+      setTimeout(function () { ttCopyBtn.textContent = prev; }, 1200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {});
+    }
   });
   document.querySelectorAll(".tag[data-src]").forEach(function (el) {
     if (!el.hasAttribute("data-tt")) el.setAttribute("data-tt", el.getAttribute("data-src"));
@@ -1332,7 +1359,7 @@ function initApp() {
         layout: opts.valueLabels && opts.horizontal ? { padding: { left: 4, right: opts.valueLabelPadding || 82 } } : undefined,
         plugins: {
           legend: { display: series.length > 1 && !opts.hideLegend, rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 7, boxHeight: 7 } },
-          tooltip: { rtl: true, callbacks: { label: function (c) {
+          tooltip: opts.disableTooltip ? { enabled: false } : { rtl: true, callbacks: { label: function (c) {
             var label = c.dataset.label || "";
             var val = c.parsed && (opts.horizontal ? c.parsed.x : c.parsed.y);
             if (val == null) val = c.parsed;
@@ -1535,9 +1562,13 @@ function initApp() {
     canvas._hoverWired = true;
     var pop = document.getElementById("ministryHoverPop");
     var popTitle = document.getElementById("ministryHoverPopTitle");
-    var lastKey = null;
+    var lastKey = null, hideTimer = null;
     function hide() { pop.style.display = "none"; lastKey = null; }
+    function scheduleHide() { hideTimer = setTimeout(hide, 150); }
+    pop.addEventListener("mouseenter", function () { clearTimeout(hideTimer); });
+    pop.addEventListener("mouseleave", hide);
     canvas.addEventListener("mousemove", function (e) {
+      clearTimeout(hideTimer);
       var st = state();
       if (st.ministry !== "all") { hide(); return; }
       var chart = charts["chartMinistrySplit"];
@@ -1589,7 +1620,7 @@ function initApp() {
       if (x + popW > window.innerWidth - 8) x = e.clientX - popW - 16;
       pop.style.left = x + "px"; pop.style.top = y + "px";
     });
-    canvas.addEventListener("mouseleave", hide);
+    canvas.addEventListener("mouseleave", scheduleHide);
   }
 
   // ריחוף מעל פרוסה בתרשים "פילוח סוגי ההתקשרויות" (פטור ממכרז / הסכם מסגרת / מכרז פומבי) מציג
@@ -1600,9 +1631,13 @@ function initApp() {
     canvas._hoverWired = true;
     var pop = document.getElementById("splitHoverPop");
     var popTitle = document.getElementById("splitHoverPopTitle");
-    var lastKey = null;
+    var lastKey = null, hideTimer = null;
     function hide() { pop.style.display = "none"; lastKey = null; }
+    function scheduleHide() { hideTimer = setTimeout(hide, 150); }
+    pop.addEventListener("mouseenter", function () { clearTimeout(hideTimer); });
+    pop.addEventListener("mouseleave", hide);
     canvas.addEventListener("mousemove", function (e) {
+      clearTimeout(hideTimer);
       var chart = charts["chartExemptSplit"];
       if (!chart) { hide(); return; }
       var els = chart.getElementsAtEventForMode(e, "nearest", { intersect: true }, false);
@@ -1613,35 +1648,12 @@ function initApp() {
         lastKey = key;
         var brk = topLevelMinistryBreakdown(key, exemptYearFilter.get());
         popTitle.textContent = key + " — פילוח לפי משרד";
-        destroyIf("chartSplitHoverMini");
-        var miniPctPlugin = {
-          id: "splitMiniPct",
-          afterDraw: function (c) {
-            var ctx = c.ctx, meta = c.getDatasetMeta(0);
-            ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#ffffff"; ctx.font = "700 15px system-ui, sans-serif";
-            meta.data.forEach(function (arc, i) {
-              var props = arc.getProps(["startAngle", "endAngle", "innerRadius", "outerRadius", "x", "y"], true);
-              var angle = props.endAngle - props.startAngle;
-              if (angle < 0.15) return;
-              var mid = (props.startAngle + props.endAngle) / 2, r = (props.innerRadius + props.outerRadius) / 2;
-              ctx.fillText(fmt(brk[i].pct, 0) + "%", props.x + Math.cos(mid) * r, props.y + Math.sin(mid) * r);
-            });
-            ctx.restore();
-          }
-        };
-        var miniCtx = document.getElementById("chartSplitHoverMini").getContext("2d");
-        charts["chartSplitHoverMini"] = new Chart(miniCtx, {
-          type: "doughnut",
-          data: { labels: brk.map(function (m) { return m.label; }), datasets: [{ data: brk.map(function (m) { return m.count; }), backgroundColor: brk.map(function (m) { return cssVar(m.color.replace("var(", "").replace(")", "")); }), borderColor: cssVar("--surface-2"), borderWidth: 2 }] },
-          options: {
-            cutout: "55%", aspectRatio: 1.5, animation: false,
-            plugins: {
-              legend: { display: true, position: "bottom", rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 10, boxHeight: 10, font: { size: 13.5 }, padding: 10 } },
-              tooltip: { enabled: false }
-            }
-          },
-          plugins: [miniPctPlugin]
-        });
+        var unitWord = key === "מכרז פומבי" ? "מכרזים" : "רשומות";
+        var brkTotal = brk.reduce(function (s, m) { return s + m.count; }, 0);
+        makeDonut("chartSplitHoverMini", brk.map(function (m) { return m.label; }), brk.map(function (m) { return m.pct; }),
+          brk.map(function (m) { return cssVar(m.color.replace("var(", "").replace(")", "")); }),
+          "legendSplitHoverMini", brk.map(function (m) { return fmtInt(m.count) + " " + unitWord; }),
+          { aspectRatio: 1.5, disableTooltip: true, centerText: fmtInt(brkTotal), centerSubtext: unitWord });
       }
       pop.style.display = "block";
       var popW = pop.offsetWidth || 420, popH = pop.offsetHeight || 300;
@@ -1650,7 +1662,7 @@ function initApp() {
       if (x + popW > window.innerWidth - 8) x = e.clientX - popW - 16;
       pop.style.left = x + "px"; pop.style.top = y + "px";
     });
-    canvas.addEventListener("mouseleave", hide);
+    canvas.addEventListener("mouseleave", scheduleHide);
   }
 
   /* ================= SCREEN 1 ================= */
@@ -2001,7 +2013,7 @@ function initApp() {
       return GROUND_REGULATION[l] ? base + " — " + GROUND_REGULATION[l] : base;
     });
     makeBar("chartExemptGrounds", ground.labels, [{ label: "מספר רשומות", data: ground.counts, color: groundWarmPalette.slice(0, ground.labels.length) }],
-      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, categoryFontSize: 11.5 });
+      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, categoryFontSize: 11.5, disableTooltip: true });
 
     var yrs = [2020,2021,2022,2023,2024,2025]; // 2026 טרם הסתיימה, ראו מדיניות ליד הגדרת YEARS
     var contSeries, soleSeries, jointSeries;
