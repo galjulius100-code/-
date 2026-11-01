@@ -1852,7 +1852,7 @@ function initApp() {
       return { label: m.label, color: cssVar(m.color.replace("var(", "").replace(")", "")),
         data: yrs.map(function (y) { return (EXEMPT_ACTIVE_COVERAGE[m.key] || {})[y] || 0; }) };
     });
-    makeLine("chartExemptCoverage", yrs, coverageSeries, {});
+    makeLine("chartExemptCoverage", yrs, coverageSeries, { aspectRatio: 3.2 });
     document.getElementById("legendExemptCoverage").innerHTML = MINISTRIES.filter(function(m){return st.ministry==="all"||m.key===st.ministry;}).map(function (m) {
       var c2020 = (EXEMPT_ACTIVE_COVERAGE[m.key] || {})["2020"] || 0, c2025 = (EXEMPT_ACTIVE_COVERAGE[m.key] || {})["2025"] || 0;
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + fmtInt(c2020) + " ← " + fmtInt(c2025) + " רשומות</span>";
