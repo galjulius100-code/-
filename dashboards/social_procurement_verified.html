@@ -165,6 +165,12 @@ th,td{padding:8px 9px;text-align:right}
 th:first-child,td:first-child{width:1%;white-space:nowrap;text-align:center;color:var(--text-muted)}
 thead th{color:var(--text-muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;
   border-bottom:1px solid var(--card-border);white-space:nowrap;position:sticky;top:0;background:var(--surface-1)}
+thead th.sortable{cursor:pointer;user-select:none}
+thead th.sortable:hover{color:var(--text-primary);background:var(--surface-hover)}
+thead th.sort-active{color:var(--accent)}
+.sort-ind{display:inline-block;margin-inline-start:4px;font-size:9.5px;opacity:.55}
+thead th.sortable:hover .sort-ind{opacity:.9}
+.sort-ind.active{opacity:1;font-size:9px;color:var(--accent)}
 tbody tr{border-bottom:1px solid var(--grid)}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--surface-hover)}
@@ -697,9 +703,13 @@ function initApp() {
   function sortTh(tableId, key, label, extraAttrs) {
     var st = tableSort[tableId];
     var active = st.key === key;
-    var arrow = active ? (st.dir === 1 ? " ▲" : " ▼") : "";
-    return '<th data-sort-table="' + tableId + '" data-sort-key="' + key + '"' + (extraAttrs || "") +
-      ' style="cursor:pointer;user-select:none' + (active ? ";color:var(--text-primary)" : "") + '" title="לחיצה ממיינת לפי עמודה זו">' + label + arrow + "</th>";
+    // גם לפני שבוחרים למיין לפי עמודה, מופיע לצידה סמל מיון קבוע (⇅) כדי שברור כבר במבט ראשון
+    // שאפשר ללחוץ עליה — לפני התיקון היה ניתן לדעת זאת רק אחרי לחיצה בפועל.
+    var icon = active
+      ? '<span class="sort-ind active">' + (st.dir === 1 ? "▲" : "▼") + "</span>"
+      : '<span class="sort-ind">⇅</span>';
+    return '<th class="sortable' + (active ? " sort-active" : "") + '" data-sort-table="' + tableId + '" data-sort-key="' + key + '"' + (extraAttrs || "") +
+      ' title="לחיצה ממיינת לפי עמודה זו">' + label + icon + "</th>";
   }
   function sortByKey(rows, accessor, dir) {
     rows.sort(function (a, b) {
