@@ -327,10 +327,11 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
       <div class="grid cols-2">
         <div class="card">
         <div class="card-head"><div><div class="card-title">פילוח סוגי ההתקשרויות</div>
-        <div class="card-sub" id="exemptSplitSub">מתוך כלל ההתקשרויות בטווח הנבחר, איזה חלק בוצע בכל אחד משלושת סוגי ההליך: מכרז פומבי, פטור ממכרז, והסכם מסגרת</div></div>
+        <div class="card-sub" id="exemptSplitSub">מתוך כלל ההתקשרויות בטווח הנבחר, איזה חלק בוצע בכל אחד משלושת סוגי ההליך: מכרז פומבי, פטור ממכרז, והסכם מסגרת. ריחוף מעל פרוסה מציג את התפלגותה לפי שנה</div></div>
         <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="שימו לב: קובץ המקור כולל את כלל הרכש של המשרד ולא רק רכש חברתי; ראו הסבר ההיקף בפתיח המדור. שלושת סוגי ההליך לפי שדה 'סוג הליך' במקור: מכרז פומבי (מקובץ נפרד), ופטור ממכרז והסכם מסגרת (מקובץ הפטורים). שימו לב: זהו שדה נפרד מ'עילת הפטור' (למשל 'מיזם משותף') שבתרשים הסמוך — אין זיקה הכרחית בין השניים. רשומות 'כוונת התקשרות' אינן נכללות, בהיותן הודעה מקדימה בלבד; רשומות 'מיזם ללא כוונת רווח' אינן נכללות אף הן, לאחר שנמצא כי רובן המכריע נושא סטטוס 'טרם התקבלה החלטת ועדה' ולא סטטוס מאושר — כלומר פרסום שטרם הבשיל להתקשרות, ולא התקשרות בפני עצמה.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartExemptSplit" data-export-name="פילוח סוגי ההתקשרויות" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
         <canvas id="chartExemptSplit" height="200"></canvas>
         <div class="legend" id="legendExemptSplit"></div>
+        <div class="hover-pop" id="splitHoverPop"><div class="hover-pop-title" id="splitHoverPopTitle"></div><canvas id="chartSplitHoverMini" height="220"></canvas></div>
         <div class="src" id="exemptSplitSrc"></div>
       </div>
       <div class="card">
@@ -873,6 +874,30 @@ function initApp() {
       ministriesInScope(ministry).forEach(function (mKey) {
         var row = EXEMPT_BY_GROUND[mKey] && EXEMPT_BY_GROUND[mKey][y];
         if (row && row[groundKey]) sum += row[groundKey];
+      });
+      return sum;
+    });
+  }
+  // התפלגות שנתית של סוג הליך (פטור ממכרז / הסכם מסגרת / מכרז פומבי) לאורך 2020-2025, על פני
+  // משרדי הסינון הנוכחי — לריחוף ליד תרשים "פילוח סוגי ההתקשרויות". "מכרז פומבי" מגיע מ-TENDER_COUNT
+  // (קובץ נפרד); שאר סוגי ההליך מגיעים משדה העילה-העליון ב-EXEMPT_BY_TOPLEVEL.
+  function topLevelYearTrend(key, ministry) {
+    var yrs = [2020, 2021, 2022, 2023, 2024, 2025];
+    if (key === "מכרז פומבי") {
+      return yrs.map(function (y) {
+        var sum = 0;
+        ministriesInScope(ministry).forEach(function (mKey) {
+          var v = TENDER_COUNT[mKey] && TENDER_COUNT[mKey][y];
+          if (v) sum += v;
+        });
+        return sum;
+      });
+    }
+    return yrs.map(function (y) {
+      var sum = 0;
+      ministriesInScope(ministry).forEach(function (mKey) {
+        var row = EXEMPT_BY_TOPLEVEL[mKey] && EXEMPT_BY_TOPLEVEL[mKey][y];
+        if (row && row[key]) sum += row[key];
       });
       return sum;
     });
@@ -1642,6 +1667,63 @@ function initApp() {
     canvas.addEventListener("mouseleave", hide);
   }
 
+  // ריחוף מעל פרוסה בתרשים "פילוח סוגי ההתקשרויות" (פטור ממכרז / הסכם מסגרת / מכרז פומבי) מציג
+  // תרשים קו צף של התפלגות אותה פרוסה לפי שנה, באותה תבנית המשמשת כבר את עוגת הריחוף במסך 1
+  // ואת תרשים המגמה ליד עילות הפטור במסך זה.
+  function wireExemptSplitHover() {
+    var canvas = document.getElementById("chartExemptSplit");
+    if (!canvas || canvas._hoverWired) return;
+    canvas._hoverWired = true;
+    var pop = document.getElementById("splitHoverPop");
+    var popTitle = document.getElementById("splitHoverPopTitle");
+    var lastKey = null;
+    function hide() { pop.style.display = "none"; lastKey = null; }
+    canvas.addEventListener("mousemove", function (e) {
+      var chart = charts["chartExemptSplit"];
+      if (!chart) { hide(); return; }
+      var els = chart.getElementsAtEventForMode(e, "nearest", { intersect: true }, false);
+      if (!els.length) { hide(); return; }
+      var key = chart.data.labels[els[0].index];
+      if (!key) { hide(); return; }
+      if (lastKey !== key) {
+        lastKey = key;
+        var st = state();
+        var trendData = topLevelYearTrend(key, st.ministry);
+        popTitle.textContent = key + " — התפלגות שנתית";
+        destroyIf("chartSplitHoverMini");
+        var miniCtx = document.getElementById("chartSplitHoverMini").getContext("2d");
+        charts["chartSplitHoverMini"] = new Chart(miniCtx, {
+          type: "line",
+          data: { labels: [2020, 2021, 2022, 2023, 2024, 2025], datasets: [{ data: trendData, borderColor: cssVar("--accent"), backgroundColor: cssVar("--accent"), tension: .3, pointRadius: 4, pointHoverRadius: 4 }] },
+          options: {
+            aspectRatio: 1.9, animation: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: cssVar("--text-secondary"), font: { size: 12.5 } } },
+              y: { beginAtZero: true, grid: { color: cssVar("--grid") }, ticks: { color: cssVar("--text-secondary"), font: { size: 12.5 }, precision: 0 } }
+            }
+          },
+          plugins: [{
+            id: "splitTrendLabels",
+            afterDatasetsDraw: function (c) {
+              var ctx = c.ctx, meta = c.getDatasetMeta(0);
+              ctx.save(); ctx.fillStyle = cssVar("--text-primary"); ctx.font = "700 13px system-ui, sans-serif"; ctx.textAlign = "center";
+              meta.data.forEach(function (pt, i) { ctx.fillText(fmtInt(trendData[i]), pt.x, pt.y - 10); });
+              ctx.restore();
+            }
+          }]
+        });
+      }
+      pop.style.display = "block";
+      var popW = pop.offsetWidth || 420, popH = pop.offsetHeight || 300;
+      var x = e.clientX + 16, y = e.clientY - popH - 16;
+      if (y < 8) y = e.clientY + 16;
+      if (x + popW > window.innerWidth - 8) x = e.clientX - popW - 16;
+      pop.style.left = x + "px"; pop.style.top = y + "px";
+    });
+    canvas.addEventListener("mouseleave", hide);
+  }
+
   /* ================= SCREEN 1 ================= */
   function renderS1KPIs() {
     var st = state(), years = s1KpiYearFilter.get(), latestYear = years[years.length - 1];
@@ -1704,7 +1786,7 @@ function initApp() {
     // ההתפלגות תמיד מחושבת מבלוק התקציב (aggregateMinistrySplit) על פני טווח השנים שנבחר, כולל
     // "כל השנים": לפני התיקון, "כל השנים" עבר למקור נקודתי אחר (סכימת 239 השירותים), שאינו תלוי
     // בטווח השנים כלל — כך שבחירת שנים שונות הציגה את אותו תרשים בדיוק תחת תוויות שונות.
-    var mLabels, mValues, mColors, mAmounts;
+    var mLabels, mValues, mColors, mAmounts, centerParts;
     var splitByMinistry = aggregateMinistrySplit(years);
     var titleMS = document.getElementById("titleMinistrySplit");
     if (st.ministry === "all") {
@@ -1713,6 +1795,8 @@ function initApp() {
       mColors = splitByMinistry.map(function (r) { return cssVar(r.color.replace("var(", "").replace(")", "")); });
       mAmounts = splitByMinistry.map(function (r) { return formatBillions(r.amount * opF); });
       titleMS.textContent = "התפלגות רכש לפי משרד";
+      var grandTotal = splitByMinistry.reduce(function (s, r) { return s + r.amount; }, 0) * opF;
+      centerParts = formatBillionsParts(grandTotal);
     } else {
       var mm2 = MINISTRIES.filter(function (x) { return x.key === st.ministry; })[0];
       var brk = ministryServiceBreakdown(st.ministry, 6);
@@ -1721,9 +1805,11 @@ function initApp() {
       mColors = SERVICE_PALETTE.slice(0, mLabels.length);
       mAmounts = brk.amounts.map(function (a) { return formatBillions(a / 1e9); });
       titleMS.textContent = "התפלגות תקציב השירותים העיקריים — " + mm2.label;
+      centerParts = formatBillionsParts(brk.total / 1e9);
     }
     makeDonut("chartMinistrySplit", mLabels, mValues, mColors, "legendMinistrySplit", mAmounts,
-      st.ministry === "all" ? { disableTooltip: true } : { disableTooltip: true, pctOnlyInside: true, legendMinimal: true });
+      Object.assign({ centerText: centerParts.value, centerSubtext: centerParts.unit },
+        st.ministry === "all" ? { disableTooltip: true } : { disableTooltip: true, pctOnlyInside: true, legendMinimal: true }));
     wireMinistryHover();
     var tagMS = document.getElementById("tagMinistrySplit");
     var tagTrend = document.getElementById("tagTrend");
@@ -1959,7 +2045,8 @@ function initApp() {
     makeDonut("chartExemptSplit", topLevel.labels, topLevel.values,
       [cssVar("--s1"), cssVar("--s2"), cssVar("--s3"), cssVar("--s4")].slice(0, topLevel.labels.length),
       "legendExemptSplit", topLevel.counts.map(function (n) { return n + " רשומות"; }),
-      { centerText: fmtInt(splitTotal), centerSubtext: "הליכים בסך הכול" });
+      { centerText: fmtInt(splitTotal), centerSubtext: "הליכים בסך הכול", disableTooltip: true });
+    wireExemptSplitHover();
     document.getElementById("exemptSplitSrc").textContent = "מקור: ייצוא מנהל הרכש הממשלתי — שני קבצים: רשומות פטור (28.10.2026) ומכרזים פומביים (01.11.2026). מבוסס על " + fmtInt(splitTotal) + " רשומות בסינון הנוכחי. רשומות \"כוונת התקשרות\" ו\"מיזם ללא כוונת רווח\" אינן נכללות, בהיותן פרסום מקדים ולא התקשרות שהושלמה; רשומות שעילתן \"מימוש זכות ברירה (אופציה)\" אינן נכללות אף הן, בהיותן מימוש סעיף מתוך מכרז קיים ולא התקשרות עצמאית — הוצאו כבר בשלב בניית הנתונים ולא רק כאן.";
 
     var groundTotalsObj = aggregateExemptNested(EXEMPT_BY_GROUND, exemptYears, st.ministry);
