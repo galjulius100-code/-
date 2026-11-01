@@ -162,6 +162,7 @@ a{color:var(--accent)}
 
 table{border-collapse:collapse;font-size:12.5px;width:100%}
 th,td{padding:8px 9px;text-align:right}
+th:first-child,td:first-child{width:1%;white-space:nowrap;text-align:center;color:var(--text-muted)}
 thead th{color:var(--text-muted);font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;
   border-bottom:1px solid var(--card-border);white-space:nowrap;position:sticky;top:0;background:var(--surface-1)}
 tbody tr{border-bottom:1px solid var(--grid)}
@@ -456,14 +457,6 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
       <div class="src" id="topOpsSrc"></div>
     </div>
     </div>
-
-    <div class="card" style="margin-top:14px">
-        <div class="card-head"><div><div class="card-title">עלות למקבל שירות — חציון לפי משרד</div>
-        <div class="card-sub">תקציב מאושר חלקי מספר מקבלי שירות, מתוך 239 השירותים, לאחר ניקוי רשומות חשודות. משמש להשוואת עצימות ההוצאה למקבל שירות בין המשרדים, ולאיתור שירותים בודדים שעלותם למקבל שירות חורגת בבירור מהחציון של משרדם</div></div>
-        <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="הוצאו 13 רשומות שבהן שדה מקבלי השירות אינו סביר כמניין אנשים, מתוך 239 השירותים. התרשים משווה בין המשרדים את העלות החציונית לכל מקבל שירות. הבדלים בין משרדים נובעים בעיקר מהרכב סוגי השירותים: משרד עם יותר מסגרות אשפוזיות וחוץ-ביתיות, שיקרות לנפש מטבען, יציג חציון גבוה יותר ממשרד שרוב שירותיו קהילתיים ורחבי-היקף. עלות גבוהה למקבל שירות אינה בעיה כשלעצמה: שירותים כמו דיור לאנשים עם מוגבלות כרוכים בעלות גבוהה לנפש באופן טבעי, מכיוון שהם משרתים אוכלוסייה קטנה בצרכים אינטנסיביים. הבדיקה הרלוונטית היא האם שירות מסוים חורג מהותית מהעלות האופיינית לשירותים דומים לו, לא כל ערך גבוה בפני עצמו.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartCpb" data-export-name="עלות למקבל שירות - חציון" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
-        <canvas id="chartCpb" height="200"></canvas>
-        <div class="src">מקור: מפתח לרכש חברתי, נשלף 22.09.2026, משדות התקציב המאושר ומספר מקבלי השירות מתוך 239 השירותים. שלוש עשרה רשומות שבהן שדה מקבלי השירות אינו סביר כמניין אנשים הוצאו מהחישוב.</div>
-    </div>
   </section>
 
 </div>
@@ -640,13 +633,6 @@ function initApp() {
     var list = svcInMinistries(ministry);
     var tot = list.reduce(function (s, x) { return s + x.budget; }, 0);
     return Math.round(list.reduce(function (s, x) { return s + Math.pow(x.budget / tot, 2) * 10000; }, 0));
-  }
-  function cpbMedianStat(ministry) {
-    var list = svcInMinistries(ministry).filter(function (s) { return s.beneficiaries != null && !s.benSuspect; });
-    var vals = list.map(function (s) { return s.budget / s.beneficiaries; }).sort(function (a, b) { return a - b; });
-    if (!vals.length) return null;
-    var mid = Math.floor(vals.length / 2);
-    return Math.round(vals.length % 2 ? vals[mid] : (vals[mid - 1] + vals[mid]) / 2);
   }
 
   // שלוש הפונקציות הבאות מחליפות D.contin / D.soleSupplier / D.continCum: מחושבות בזמן ריצה ישירות
@@ -1118,8 +1104,8 @@ function initApp() {
   // השורות המוצגות על המסך, כדי שההורדה תיתן את הנתון המלא ללא קשר למצב ה"הצג עוד" הנוכחי.
   function exportTopServicesCSV(name) {
     var rows = window.__topServicesAllExport || [];
-    var out = [["שירות", "משרד", "תקציב (ש״ח)", "שיעור מתוך הרכש החברתי של המשרד (%)", "מקבלי שירות", "מפעילים"]].concat(
-      rows.map(function (r) { return [r.name, r.ministry, r.budget, r.sharePct, r.beneficiaries != null ? r.beneficiaries : "", r.operators]; })
+    var out = [["שירות", "משרד", "תקציב (ש״ח)", "שיעור מתוך הרכש החברתי של המשרד (%)", "מקבלי שירות", "תקציב למקבל שירות (ש״ח)", "מפעילים"]].concat(
+      rows.map(function (r) { return [r.name, r.ministry, r.budget, r.sharePct, r.beneficiaries != null ? r.beneficiaries : "", r.budgetPerBen != null ? r.budgetPerBen : "", r.operators]; })
     );
     var csv = out.map(function (r) { return r.map(csvCell).join(","); }).join("\r\n");
     saveFile(name + ".csv", "﻿" + csv);
@@ -1356,7 +1342,7 @@ function initApp() {
       options: {
         indexAxis: opts.horizontal ? "y" : "x",
         aspectRatio: opts.aspectRatio,
-        layout: opts.valueLabels && opts.horizontal ? { padding: { left: 4, right: opts.valueLabelPadding || 82 } } : undefined,
+        layout: opts.valueLabels && opts.horizontal ? { padding: { left: opts.leftPadding || 4, right: opts.valueLabelPadding || 82 } } : undefined,
         plugins: {
           legend: { display: series.length > 1 && !opts.hideLegend, rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 7, boxHeight: 7 } },
           tooltip: opts.disableTooltip ? { enabled: false } : { rtl: true, callbacks: { label: function (c) {
@@ -1899,11 +1885,11 @@ function initApp() {
     var ministryRawTotal = {};
     MINISTRIES.forEach(function (m) { ministryRawTotal[m.key] = svcMinistryTotalB(m.key) * 1e9; });
     var tbl = document.getElementById("tblTopServices");
-    var html = "<thead><tr><th>שירות</th><th>משרד</th><th>תקציב (ש״ח)</th><th>שיעור מתוך הרכש החברתי של המשרד</th><th>מקבלי שירות</th><th>מפעילים</th></tr></thead><tbody>";
+    var html = "<thead><tr><th>#</th><th>שירות</th><th>משרד</th><th>תקציב (ש״ח)</th><th>שיעור מתוך הרכש החברתי של המשרד</th><th>מקבלי שירות</th><th>תקציב למקבל שירות (ש״ח)</th><th>מפעילים</th></tr></thead><tbody>";
     if (rows.length === 0) {
-      html += "<tr><td colspan='6' style='text-align:center;color:var(--text-muted);padding:18px'>לא נמצאו שירותים התואמים לחיפוש</td></tr>";
+      html += "<tr><td colspan='8' style='text-align:center;color:var(--text-muted);padding:18px'>לא נמצאו שירותים התואמים לחיפוש</td></tr>";
     }
-    rows.forEach(function (s) {
+    rows.forEach(function (s, idx) {
       var sharePct = ministryRawTotal[s.ministry] ? (s.budget / ministryRawTotal[s.ministry] * 100) : null;
       // סימון שדה "מקבלי שירות" כחשוד כאשר העלות הגלומה לאדם חורגת ממיליון ש"ח — יחס קיצוני כזה
       // מעיד על כך שהשדה במקור כנראה סופר יחידה אחרת (למשל מספר מוקדים/רשויות), לא נהנים בפועל.
@@ -1912,9 +1898,10 @@ function initApp() {
       var benCell = s.beneficiaries == null ? "—"
         : benSuspect ? "<span style='color:var(--text-muted);cursor:help' title='יחס תקציב-למקבל שירות קיצוני (" + fmtInt(Math.round(s.budget / s.beneficiaries)) + " ש\"ח למקבל שירות) — הנתון המקורי (" + fmtInt(s.beneficiaries) + ") מקורו במפתח לרכש חברתי אך נראה לא סביר כמניין מקבלי שירות בפועל, וייתכן שהוא משקף יחידת מידה אחרת (למשל מספר מוקדים או רשויות); לכן אינו מוצג כאן.'>—</span>"
         : fmtInt(s.beneficiaries);
-      html += "<tr><td class='name'>" + s.name + "</td><td>" + MIN_LABEL[s.ministry] + "</td><td>" + fmtInt(s.budget) + "</td>" +
+      var budgetPerBenCell = (s.beneficiaries == null || benSuspect) ? "—" : fmtInt(Math.round(s.budget / s.beneficiaries));
+      html += "<tr><td>" + (idx + 1) + "</td><td class='name'>" + s.name + "</td><td>" + MIN_LABEL[s.ministry] + "</td><td>" + fmtInt(s.budget) + "</td>" +
         "<td>" + (sharePct != null ? fmt(sharePct, 2) + "%" : "—") + "</td>" +
-        "<td>" + benCell + "</td><td>" + s.operators + "</td></tr>";
+        "<td>" + benCell + "</td><td>" + budgetPerBenCell + "</td><td>" + s.operators + "</td></tr>";
     });
     tbl.innerHTML = html + "</tbody>";
     document.getElementById("topServicesSub").textContent = topServicesSearchClean
@@ -1927,8 +1914,10 @@ function initApp() {
     // כמו בטבלת מרשם המפעילים — כך שההורדה לאקסל נותנת את הנתון המלא גם כשהטבלה מוצגת מצומצמת.
     window.__topServicesAllExport = allInScope.map(function (s) {
       var sharePct = ministryRawTotal[s.ministry] ? (s.budget / ministryRawTotal[s.ministry] * 100) : null;
+      var benSuspectExp = s.beneficiaries && (s.budget / s.beneficiaries) > 1000000;
       return { name: s.name, ministry: MIN_LABEL[s.ministry], budget: s.budget,
-        sharePct: sharePct != null ? +sharePct.toFixed(2) : "", beneficiaries: s.beneficiaries, operators: s.operators };
+        sharePct: sharePct != null ? +sharePct.toFixed(2) : "", beneficiaries: s.beneficiaries,
+        budgetPerBen: (s.beneficiaries == null || benSuspectExp) ? null : Math.round(s.budget / s.beneficiaries), operators: s.operators };
     });
   }
 
@@ -2013,7 +2002,7 @@ function initApp() {
       return GROUND_REGULATION[l] ? base + " — " + GROUND_REGULATION[l] : base;
     });
     makeBar("chartExemptGrounds", ground.labels, [{ label: "מספר רשומות", data: ground.counts, color: groundWarmPalette.slice(0, ground.labels.length) }],
-      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, categoryFontSize: 11.5, disableTooltip: true });
+      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, leftPadding: 50, categoryFontSize: 13.5, disableTooltip: true });
 
     var yrs = [2020,2021,2022,2023,2024,2025]; // 2026 טרם הסתיימה, ראו מדיניות ליד הגדרת YEARS
     var contSeries, soleSeries, jointSeries;
@@ -2148,9 +2137,9 @@ function initApp() {
     }).sort(function (a, b) { return b.b - a.b; });
     var concShownCount = concExpanded ? 50 : 12;
     var concRows = concAllRows.slice(0, concShownCount);
-    var h = '<thead><tr><th class="name">שירות</th><th>משרד</th><th>מבנה</th><th>תקציב (ש״ח)</th></tr></thead><tbody>';
-    concRows.forEach(function (x) {
-      h += "<tr><td class='name'>" + x.n + "</td><td>" + MIN_LABEL[x.m] + "</td>" +
+    var h = '<thead><tr><th>#</th><th class="name">שירות</th><th>משרד</th><th>מבנה</th><th>תקציב (ש״ח)</th></tr></thead><tbody>';
+    concRows.forEach(function (x, idx) {
+      h += "<tr><td>" + (idx + 1) + "</td><td class='name'>" + x.n + "</td><td>" + MIN_LABEL[x.m] + "</td>" +
         '<td style="color:' + cssVar(x.k === "מפעיל יחיד" ? "--critical" : "--serious") + ';font-weight:700">' + x.k + "</td>" +
         "<td>" + fmtInt(x.b) + "</td></tr>";
     });
@@ -2179,13 +2168,13 @@ function initApp() {
       ? "נמצאו <b>" + fmtInt(supMatched.length) + "</b> מפעילים התואמים לחיפוש “" + supSearchClean.replace(/[<>&]/g, "") + "”, מתוך <span id=\"supCount\">" + fmtInt(supRowsAll.length) + "</span> מפעילים מזוהים בסינון הנוכחי; ההורדה לאקסל כוללת תמיד את הרשימה המלאה, ללא קשר לסינון או לחיפוש"
       : "מוצגים שלושים המפעילים המובילים לפי מספר שירותים, מתוך <span id=\"supCount\">" + fmtInt(supRowsAll.length) + "</span> מפעילים מזוהים בסינון הנוכחי; ההורדה לאקסל כוללת תמיד את הרשימה המלאה של כלל המפעילים, ללא קשר לסינון או לחיפוש";
     var supRows = supMatched.slice(0, 30);
-    var hs = '<thead><tr><th class="name">מפעיל</th><th>סוג</th><th>מס\' תאגיד</th><th>מס\' שירותים</th><th>משרדים</th></tr></thead><tbody>';
+    var hs = '<thead><tr><th>#</th><th class="name">מפעיל</th><th>סוג</th><th>מס\' תאגיד</th><th>מס\' שירותים</th><th>משרדים</th></tr></thead><tbody>';
     if (supRows.length === 0) {
-      hs += "<tr><td colspan='5' style='text-align:center;color:var(--text-muted);padding:18px'>לא נמצאו מפעילים התואמים לחיפוש</td></tr>";
+      hs += "<tr><td colspan='6' style='text-align:center;color:var(--text-muted);padding:18px'>לא נמצאו מפעילים התואמים לחיפוש</td></tr>";
     }
-    supRows.forEach(function (r) {
+    supRows.forEach(function (r, idx) {
       var offLabel = r.offices.map(function (mk) { return minFullByKey[mk]; }).join(" | ");
-      hs += "<tr><td class='name'>" + (r.name || "<span style='color:var(--text-muted)'>לא זוהה ברשם</span>") + "</td><td>" + (r.kind || "—") + "</td><td>" + r.id + "</td><td style='font-weight:700'>" + r.services + "</td><td style='font-size:11px;color:var(--text-secondary)'>" + offLabel + "</td></tr>";
+      hs += "<tr><td>" + (idx + 1) + "</td><td class='name'>" + (r.name || "<span style='color:var(--text-muted)'>לא זוהה ברשם</span>") + "</td><td>" + (r.kind || "—") + "</td><td>" + r.id + "</td><td style='font-weight:700'>" + r.services + "</td><td style='font-size:11px;color:var(--text-secondary)'>" + offLabel + "</td></tr>";
     });
     document.getElementById("tblSupTop").innerHTML = hs + "</tbody>";
     // ה-export מייצא את הרשימה המלאה (עד 1,034 מפעילים), לא רק את השורות המוצגות בטבלה, כי טבלה ארוכה כל כך אינה קריאה על המסך
@@ -2235,9 +2224,6 @@ function initApp() {
       { horizontal: true, truncateAxisLabels: 24, aspectRatio: 1.1 });
     document.getElementById("topOpsSub").textContent = "דירוג עשרת המפעילים הבודדים (לפי שם וזיהוי תאגידי) עם המספר הגדול ביותר של שירותים שונים שהם מוגדרים כמפעילים בהם, מתוך מרשם המפעילים";
     document.getElementById("topOpsSrc").textContent = "מקור: מפתח לרכש חברתי, נשלף 22.09.2026. מוצגים עשרת המפעילים המובילים לפי מספר שירותים, מתוך " + fmtInt(supRowsAll.length) + " מפעילים מזוהים בסינון הנוכחי.";
-
-    makeBar("chartCpb", mins.map(function (m) { return m.label; }),
-      [{ label: "עלות למקבל שירות (ש״ח)", color: cssVar("--s3"), data: mins.map(function (m) { return cpbMedianStat(m.key); }) }], { horizontal: true, aspectRatio: 4.5 });
   }
 
   /* ================= MASTER RENDER ================= */
