@@ -889,6 +889,11 @@ function initApp() {
     var tot = Object.keys(topRow).reduce(function (s, k) { return s + topRow[k]; }, 0);
     return tot > 0 ? +(n / tot * 100).toFixed(1) : null;
   }
+  // מספר הרשומות הגולמי מאחורי jointVenturePct, להורדה לאקסל של chartJoint לצד האחוז עצמו.
+  function jointVentureCount(ministryKey, year) {
+    var groundRow = EXEMPT_BY_GROUND[ministryKey] && EXEMPT_BY_GROUND[ministryKey][year];
+    return groundRow ? (groundRow["מיזם משותף"] || 0) : null;
+  }
   function exemptAmountSum(years, ministry) {
     var total = 0;
     ministriesInScope(ministry).forEach(function (mKey) {
@@ -1332,6 +1337,9 @@ function initApp() {
       },
       plugins: [pointLabelPlugin]
     });
+    // ראו ההערה המקבילה ב-makeBar/makeDonut: עמודת/עמודות נתון נוסף להורדה לאקסל — כאן בעיקר
+    // לערכים המוצגים כתווית נקודה על הקו (pointLabels, למשל קצב שינוי שנתי) שאינם חלק מה-dataset.
+    if (opts.exportExtra) charts[canvasId]._exportExtra = opts.exportExtra;
   }
 
   function makeBar(canvasId, labels, series, opts) {
@@ -1867,8 +1875,16 @@ function initApp() {
         return (pct >= 0 ? "+" : "") + fmt(pct, 1) + "%";
       });
     }
+    // כמו computeYoyLabels, אך מחזירה מספרים גולמיים (לא מחרוזת מעוצבת) — לשימוש בהורדה לאקסל של
+    // קצב השינוי השנתי המוצג כתווית על הגרף עצמו, ושאחרת לא היה נכלל כלל בקובץ המיוצא.
+    function computeYoyNumeric(data) {
+      return data.map(function (v, i) {
+        if (i === 0 || v == null || data[i - 1] == null || data[i - 1] === 0) return null;
+        return +((v / data[i - 1] - 1) * 100).toFixed(1);
+      });
+    }
     var trendMinistries = st.ministry === "all" ? MINISTRIES : MINISTRIES.filter(function (m) { return m.key === st.ministry; });
-    var trendSeries, trendPointLabels;
+    var trendSeries, trendPointLabels, trendExportExtra;
     if (st.ministry === "all") {
       trendSeries = trendMinistries.map(function (m) {
         var data = YEARS.map(function (y) { return +(ministryBudgetSum([y], m.key, "approved") / 1e9 * opF).toFixed(3); });
@@ -1878,6 +1894,7 @@ function initApp() {
       var trendAllData = YEARS.map(function (y) { return +(ministryBudgetSum([y], "all", "approved") / 1e9 * opF).toFixed(3); });
       trendSeries.push({ label: "כל המשרדים", color: cssVar("--s2"), data: trendAllData });
       trendPointLabels = trendSeries.map(function (s) { return computeYoyLabels(s.data); });
+      trendExportExtra = trendSeries.map(function (s) { return { label: "שינוי שנתי (%) — " + s.label, values: computeYoyNumeric(s.data) }; });
     } else {
       var mOnly = trendMinistries[0];
       var trendData = YEARS.map(function (y) { return +(ministryBudgetSum([y], mOnly.key, "approved") / 1e9 * opF).toFixed(3); });
@@ -1892,8 +1909,9 @@ function initApp() {
         { label: 'תקציב מאושר (ריאלי, מחירי 2025)', data: trendRealData, color: cssVar("--s4") }
       ];
       trendPointLabels = [computeYoyLabels(trendData), null];
+      trendExportExtra = [{ label: "שינוי שנתי נומינלי (%)", values: computeYoyNumeric(trendData) }];
     }
-    makeLine("chartTrend", YEARS, trendSeries, { yTitle: "מיליארד ש״ח", pointLabels: trendPointLabels, aspectRatio: 2.6 });
+    makeLine("chartTrend", YEARS, trendSeries, { yTitle: "מיליארד ש״ח", pointLabels: trendPointLabels, aspectRatio: 2.6, exportExtra: trendExportExtra });
     var trendFirstYear = YEARS[0];
     var cumInflationPct = CPI_DEFLATOR_TO_2025[trendFirstYear] ? (CPI_DEFLATOR_TO_2025[trendFirstYear] - 1) * 100 : null;
     document.getElementById("trendInsight").textContent = st.ministry !== "all" && cumInflationPct != null
@@ -1908,7 +1926,7 @@ function initApp() {
       var ob = MINISTRY_TOTAL_BUDGET[ministry][String(y)];
       return row && ob ? +(row.approved / ob * 100).toFixed(1) : null;
     }
-    var intSeries;
+    var intSeries, intMinistries = st.ministry === "all" ? MINISTRIES : MINISTRIES.filter(function (x) { return x.key === st.ministry; });
     if (st.ministry === "all") {
       intSeries = MINISTRIES.map(function (m) {
         return { label: m.label, color: cssVar(m.color.replace("var(", "").replace(")", "")),
@@ -1919,7 +1937,14 @@ function initApp() {
       intSeries = [{ label: m2.label, color: cssVar(m2.color.replace("var(", "").replace(")", "")),
         data: intYears.map(function (y) { return approvedIntensity(st.ministry, y); }) }];
     }
-    makeLine("chartIntensity", intYears, intSeries, { max: 65, percentUnit: true });
+    // הנתון שהגרף עצמו מצייר הוא רק האחוז (עצמת רכש); ההורדה מוסיפה גם את התקציב המאושר הגולמי
+    // של הרכש החברתי ואת סך תקציב המשרד שעומד מאחורי אותו אחוז, לכל משרד ולכל שנה.
+    var intExportExtra = [];
+    intMinistries.forEach(function (m) {
+      intExportExtra.push({ label: "תקציב רכש חברתי מאושר (ש״ח) — " + m.label, values: intYears.map(function (y) { var row = BUDGET_DATA[m.key][y]; return row ? row.approved : null; }) });
+      intExportExtra.push({ label: "סך תקציב המשרד (ש״ח) — " + m.label, values: intYears.map(function (y) { var ob = MINISTRY_TOTAL_BUDGET[m.key][String(y)]; return ob != null ? ob : null; }) });
+    });
+    makeLine("chartIntensity", intYears, intSeries, { max: 65, percentUnit: true, exportExtra: intExportExtra });
     var legEl = document.getElementById("legendIntensity");
     legEl.innerHTML = MINISTRIES.filter(function(m){return st.ministry==="all"||m.key===st.ministry;}).map(function (m) {
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + fmt(approvedIntensity(m.key, 2025),1) + "% ב-2025</span>";
@@ -2126,7 +2151,11 @@ function initApp() {
       return GROUND_REGULATION[l] ? base + " — " + GROUND_REGULATION[l] : base;
     });
     makeBar("chartExemptGrounds", ground.labels, [{ label: "מספר רשומות", data: ground.counts, color: groundWarmPalette.slice(0, ground.labels.length) }],
-      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, leftPadding: 50, categoryFontSize: 13.5, disableTooltip: true });
+      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, leftPadding: 50, categoryFontSize: 13.5, disableTooltip: true,
+        exportExtra: [
+          { label: "אחוז מכלל הפטורים (%)", values: ground.values.map(function (v) { return +v.toFixed(1); }) },
+          { label: "תקנה", values: ground.labels.map(function (l) { return GROUND_REGULATION[l] || ""; }) }
+        ] });
 
     var yrs = [2020,2021,2022,2023,2024,2025]; // 2026 טרם הסתיימה, ראו מדיניות ליד הגדרת YEARS
     var contSeries, soleSeries, jointSeries;
@@ -2152,13 +2181,22 @@ function initApp() {
       jointSeries = [{ label: mm.label, color: cssVar(mm.color.replace("var(", "").replace(")", "")),
         data: yrs.map(function (y) { return jointVenturePct(st.ministry, String(y)); }) }];
     }
-    makeLine("chartContin", yrs, contSeries, { max: 90, percentUnit: true });
+    var continMinistries = st.ministry === "all" ? MINISTRIES : MINISTRIES.filter(function (x) { return x.key === st.ministry; });
+    var contExportExtra = [];
+    continMinistries.forEach(function (m) {
+      contExportExtra.push({ label: "מספר הארכות — " + m.label, values: yrs.map(function (y) { return continStat(m.key, y).cont; }) });
+      contExportExtra.push({ label: "סך רשומות פטור — " + m.label, values: yrs.map(function (y) { return continStat(m.key, y).tot; }) });
+    });
+    makeLine("chartContin", yrs, contSeries, { max: 90, percentUnit: true, exportExtra: contExportExtra });
     document.getElementById("legendContin").innerHTML = MINISTRIES.filter(function(m){return st.ministry==="all"||m.key===st.ministry;}).map(function (m) {
       var c = continCumStat(m.key);
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + c.pct + "% במצטבר</span>";
     }).join("");
 
-    makeLine("chartSole", yrs, soleSeries, { max: 80, percentUnit: true });
+    var soleExportExtra = continMinistries.map(function (m) {
+      return { label: "מספר רשומות ספק יחיד — " + m.label, values: yrs.map(function (y) { return soleSupplierStat(m.key, y).n; }) };
+    });
+    makeLine("chartSole", yrs, soleSeries, { max: 80, percentUnit: true, exportExtra: soleExportExtra });
     document.getElementById("legendSole").innerHTML = MINISTRIES.filter(function(m){return st.ministry==="all"||m.key===st.ministry;}).map(function (m) {
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + soleSupplierStat(m.key, 2020).pct + "% ← " + soleSupplierStat(m.key, 2025).pct + "%</span>";
     }).join("");
@@ -2173,7 +2211,10 @@ function initApp() {
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + fmtInt(c2020) + " ← " + fmtInt(c2025) + " רשומות</span>";
     }).join("");
 
-    makeLine("chartJoint", yrs, jointSeries, { max: 40, percentUnit: true });
+    var jointExportExtra = continMinistries.map(function (m) {
+      return { label: "מספר רשומות מיזם משותף — " + m.label, values: yrs.map(function (y) { return jointVentureCount(m.key, String(y)); }) };
+    });
+    makeLine("chartJoint", yrs, jointSeries, { max: 40, percentUnit: true, exportExtra: jointExportExtra });
     document.getElementById("legendJoint").innerHTML = MINISTRIES.filter(function(m){return st.ministry==="all"||m.key===st.ministry;}).map(function (m) {
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + jointVenturePct(m.key, "2020") + "% ← " + jointVenturePct(m.key, "2025") + "%</span>";
     }).join("");
@@ -2185,7 +2226,11 @@ function initApp() {
       return { label: m.label, color: cssVar(m.color.replace("var(", "").replace(")", "")),
         data: OPERATOR_TYPE_ORDER.map(function (t) { return +((rec.breakdown[t] || 0) / rec.identified * 100).toFixed(1); }) };
     });
-    makeBar("chartOperatorType", OPERATOR_TYPE_ORDER, opTypeSeries, { percentUnit: true });
+    var opTypeExportExtra = MINISTRIES.map(function (m) {
+      var rec = OPERATOR_TYPE_PARTIAL[m.key];
+      return { label: "מספר רשומות — " + m.label, values: OPERATOR_TYPE_ORDER.map(function (t) { return rec.breakdown[t] || 0; }) };
+    });
+    makeBar("chartOperatorType", OPERATOR_TYPE_ORDER, opTypeSeries, { percentUnit: true, exportExtra: opTypeExportExtra });
     document.getElementById("legendOperatorType").innerHTML = MINISTRIES.map(function (m) {
       var rec = OPERATOR_TYPE_PARTIAL[m.key];
       var idPct = fmt(rec.identified / rec.total * 100, 1);
