@@ -685,6 +685,42 @@ function initApp() {
   var supSearchTerm = "";
   var topServicesSearchTerm = "";
 
+  /* ================= מיון טבלאות בהקשה על כותרת עמודה ================= */
+  // לכל טבלה שדה מיון נוכחי (key) וכיוון (dir: 1=עולה, -1=יורד); ברירת המחדל (key===null) משמעה
+  // סדר ברירת המחדל המקורי של אותה טבלה (למשל ממוין מראש לפי תקציב). ההקשה על כותרת ממוינת שוב
+  // מהפכת את הכיוון; הקשה על כותרת אחרת עוברת למיון יורד (הערך הגדול ביותר למעלה) כברירת מחדל.
+  var tableSort = {
+    tblTopServices: { key: null, dir: -1 },
+    tblConc: { key: null, dir: -1 },
+    tblSupTop: { key: null, dir: -1 }
+  };
+  function sortTh(tableId, key, label, extraAttrs) {
+    var st = tableSort[tableId];
+    var active = st.key === key;
+    var arrow = active ? (st.dir === 1 ? " ▲" : " ▼") : "";
+    return '<th data-sort-table="' + tableId + '" data-sort-key="' + key + '"' + (extraAttrs || "") +
+      ' style="cursor:pointer;user-select:none' + (active ? ";color:var(--text-primary)" : "") + '" title="לחיצה ממיינת לפי עמודה זו">' + label + arrow + "</th>";
+  }
+  function sortByKey(rows, accessor, dir) {
+    rows.sort(function (a, b) {
+      var va = accessor(a), vb = accessor(b);
+      if (typeof va === "string" || typeof vb === "string") {
+        return dir * String(va == null ? "" : va).localeCompare(String(vb == null ? "" : vb), "he");
+      }
+      va = va == null ? -Infinity : va; vb = vb == null ? -Infinity : vb;
+      return dir * (va - vb);
+    });
+    return rows;
+  }
+  document.addEventListener("click", function (e) {
+    var th = e.target.closest("th[data-sort-key]"); if (!th) return;
+    var tableId = th.getAttribute("data-sort-table"), key = th.getAttribute("data-sort-key");
+    var st = tableSort[tableId]; if (!st) return;
+    if (st.key === key) { st.dir *= -1; } else { st.key = key; st.dir = -1; }
+    if (tableId === "tblTopServices") renderTopServicesTable();
+    else renderS3Charts();
+  });
+
   // כל מסך מציג רק נתוני 2025 חתך-נקודתי (S3) או שאין בו פילוח לפי סוג מפעיל ברמת שירות (S2-S3);
   // הסינון הגלובלי מוצג לכן כמושבת עם הסבר במסכים שבהם אינו פועל בפועל, כדי לא להטעות.
   // סינון השנים הוסר מהסרגל הגלובלי (ראו createYearFilter): הוא משפיע רק על חלק קטן יחסית
@@ -1557,7 +1593,8 @@ function initApp() {
     pop.addEventListener("mouseleave", function () { if (!pinned) hide(); });
     // לחיצה על העוגה הצפה או על הכרטיס שמעורר אותה נועצת אותה פתוחה: כך אפשר להזיז את העכבר
     // לתוך הכפתור להורדת הנתונים בלי שהעוגה תיעלם קודם. לחיצה בכל מקום אחר בדף סוגרת אותה.
-    pop.addEventListener("click", function (e) { e.stopPropagation(); });
+    // (בלי e.stopPropagation() כאן: הבדיקה canvas.contains/pop.contains שלמטה כבר מספיקה כדי שלא
+    // לסגור בלחיצה פנימית, וstopPropagation היה חוסם גם את מאזין ההורדה המשותף שמאזין ל-document.)
     canvas.addEventListener("click", function () { if (lastKey) pinned = true; });
     document.addEventListener("click", function (e) {
       if (!pinned) return;
@@ -1600,7 +1637,9 @@ function initApp() {
         };
         charts["chartMinistryHoverMini"] = new Chart(miniCtx, {
           type: "doughnut",
-          data: { labels: brk.labels, datasets: [{ data: brk.values, backgroundColor: SERVICE_PALETTE.slice(0, brk.labels.length), borderColor: cssVar("--surface-2"), borderWidth: 2 }] },
+          // data.data מחזיק את התקציב בפועל (לא את האחוז) כדי שהורדת הנתונים לאקסל תפיק ערכים
+          // שימושיים — היחס בין הפרוסות זהה בכל מקרה, כי האחוז עצמו נגזר מאותו תקציב.
+          data: { labels: brk.labels, datasets: [{ label: "תקציב (ש״ח)", data: brk.amounts, backgroundColor: SERVICE_PALETTE.slice(0, brk.labels.length), borderColor: cssVar("--surface-2"), borderWidth: 2 }] },
           options: {
             cutout: "55%", aspectRatio: 1.5, animation: false,
             plugins: {
@@ -1634,8 +1673,8 @@ function initApp() {
     function scheduleHide() { if (pinned) return; hideTimer = setTimeout(hide, 150); }
     pop.addEventListener("mouseenter", function () { clearTimeout(hideTimer); });
     pop.addEventListener("mouseleave", function () { if (!pinned) hide(); });
-    // כנ"ל: לחיצה נועצת את העוגה הצפה פתוחה כדי לאפשר להגיע לכפתור ההורדה, ולחיצה מחוץ לה סוגרת.
-    pop.addEventListener("click", function (e) { e.stopPropagation(); });
+    // כנ"ל: לחיצה נועצת את העוגה הצפה פתוחה כדי לאפשר להגיע לכפתור ההורדה, ולחיצה מחוץ לה סוגרת
+    // (בלי stopPropagation — ראו ההערה המקבילה ב-wireMinistryHover).
     canvas.addEventListener("click", function () { if (lastKey) pinned = true; });
     document.addEventListener("click", function (e) {
       if (!pinned) return;
@@ -1892,7 +1931,31 @@ function initApp() {
 
   function renderTopServicesTable() {
     var st = state();
-    var allInScope = svcInMinistries(st.ministry).slice().sort(function (a, b) { return b.budget - a.budget; });
+    // שיעור כל שירות מחושב מתוך סך תקציב הרכש החברתי של המשרד שהשירות שייך לו בפועל (לא ממשרד
+    // הסינון הנוכחי, שעשוי להיות "הכל"), כדי שהאחוז תמיד ישקף נכונה את משקל השירות בתוך משרדו.
+    // מחושב לפני המיון, כי מפתח המיון "שיעור" תלוי בו.
+    var ministryRawTotal = {};
+    MINISTRIES.forEach(function (m) { ministryRawTotal[m.key] = svcMinistryTotalB(m.key) * 1e9; });
+    function budgetPerBenOf(s) {
+      var benSuspect = s.beneficiaries && (s.budget / s.beneficiaries) > 1000000;
+      return (s.beneficiaries == null || benSuspect) ? null : s.budget / s.beneficiaries;
+    }
+    var TOP_SERVICES_SORT_ACCESSORS = {
+      name: function (s) { return s.name; },
+      ministry: function (s) { return MIN_LABEL[s.ministry]; },
+      budget: function (s) { return s.budget; },
+      sharePct: function (s) { return ministryRawTotal[s.ministry] ? (s.budget / ministryRawTotal[s.ministry] * 100) : null; },
+      beneficiaries: function (s) { return s.beneficiaries; },
+      budgetPerBen: budgetPerBenOf,
+      operators: function (s) { return s.operators; }
+    };
+    var allInScope = svcInMinistries(st.ministry).slice();
+    var sortState = tableSort.tblTopServices;
+    if (sortState.key && TOP_SERVICES_SORT_ACCESSORS[sortState.key]) {
+      sortByKey(allInScope, TOP_SERVICES_SORT_ACCESSORS[sortState.key], sortState.dir);
+    } else {
+      sortByKey(allInScope, TOP_SERVICES_SORT_ACCESSORS.budget, -1);
+    }
     var shownCount = topServicesExpanded ? 50 : 12;
     // החיפוש פועל על שם השירות בלבד (תת-מחרוזת, לא תלוי רישיות) ומתעלם ממגבלת 12/50, כדי שחיפוש
     // של שירות ספציפי לא יוסתר רק בגלל שהוא לא נמצא בין הגדולים ביותר. ה-export תמיד מתעלם מהחיפוש.
@@ -1901,12 +1964,12 @@ function initApp() {
       ? allInScope.filter(function (s) { return (s.name || "").toLowerCase().indexOf(topServicesSearchClean) !== -1; })
       : allInScope;
     var rows = topServicesSearchClean ? topServicesMatched : topServicesMatched.slice(0, shownCount);
-    // שיעור כל שירות מחושב מתוך סך תקציב הרכש החברתי של המשרד שהשירות שייך לו בפועל (לא ממשרד
-    // הסינון הנוכחי, שעשוי להיות "הכל"), כדי שהאחוז תמיד ישקף נכונה את משקל השירות בתוך משרדו.
-    var ministryRawTotal = {};
-    MINISTRIES.forEach(function (m) { ministryRawTotal[m.key] = svcMinistryTotalB(m.key) * 1e9; });
     var tbl = document.getElementById("tblTopServices");
-    var html = "<thead><tr><th>#</th><th>שירות</th><th>משרד</th><th>תקציב (ש״ח)</th><th>שיעור מתוך הרכש החברתי של המשרד</th><th>מקבלי שירות</th><th>תקציב למקבל שירות (ש״ח)</th><th>מפעילים</th></tr></thead><tbody>";
+    var html = "<thead><tr><th>#</th>" +
+      sortTh("tblTopServices", "name", "שירות") + sortTh("tblTopServices", "ministry", "משרד") +
+      sortTh("tblTopServices", "budget", "תקציב (ש״ח)") + sortTh("tblTopServices", "sharePct", "שיעור מתוך הרכש החברתי של המשרד") +
+      sortTh("tblTopServices", "beneficiaries", "מקבלי שירות") + sortTh("tblTopServices", "budgetPerBen", "תקציב למקבל שירות (ש״ח)") +
+      sortTh("tblTopServices", "operators", "מפעילים") + "</tr></thead><tbody>";
     if (rows.length === 0) {
       html += "<tr><td colspan='8' style='text-align:center;color:var(--text-muted);padding:18px'>לא נמצאו שירותים התואמים לחיפוש</td></tr>";
     }
@@ -2154,11 +2217,22 @@ function initApp() {
     var concAllRows = SERVICES.filter(function (s) {
       return scope.indexOf(s.ministry) !== -1 && (s.operators === 1 || s.operators === 2);
     }).map(function (s) {
-      return { n: s.name, m: s.ministry, b: s.budget, k: s.operators === 1 ? "מפעיל יחיד" : "שני מפעילים" };
-    }).sort(function (a, b) { return b.b - a.b; });
+      return { n: s.name, m: s.ministry, mLabel: MIN_LABEL[s.ministry], b: s.budget, k: s.operators === 1 ? "מפעיל יחיד" : "שני מפעילים" };
+    });
+    var CONC_SORT_ACCESSORS = {
+      n: function (x) { return x.n; }, m: function (x) { return x.mLabel; },
+      k: function (x) { return x.k; }, b: function (x) { return x.b; }
+    };
+    var concSortState = tableSort.tblConc;
+    if (concSortState.key && CONC_SORT_ACCESSORS[concSortState.key]) {
+      sortByKey(concAllRows, CONC_SORT_ACCESSORS[concSortState.key], concSortState.dir);
+    } else {
+      sortByKey(concAllRows, CONC_SORT_ACCESSORS.b, -1);
+    }
     var concShownCount = concExpanded ? 50 : 12;
     var concRows = concAllRows.slice(0, concShownCount);
-    var h = '<thead><tr><th>#</th><th class="name">שירות</th><th>משרד</th><th>מבנה</th><th>תקציב (ש״ח)</th></tr></thead><tbody>';
+    var h = '<thead><tr><th>#</th>' + sortTh("tblConc", "n", "שירות", ' class="name"') + sortTh("tblConc", "m", "משרד") +
+      sortTh("tblConc", "k", "מבנה") + sortTh("tblConc", "b", "תקציב (ש״ח)") + '</tr></thead><tbody>';
     concRows.forEach(function (x, idx) {
       h += "<tr><td>" + (idx + 1) + "</td><td class='name'>" + x.n + "</td><td>" + MIN_LABEL[x.m] + "</td>" +
         '<td style="color:' + cssVar(x.k === "מפעיל יחיד" ? "--critical" : "--serious") + ';font-weight:700">' + x.k + "</td>" +
@@ -2178,7 +2252,18 @@ function initApp() {
     var minFullByKey = { welfare: "רווחה", health: "בריאות", education: "חינוך" };
     var supRowsAll = OPERATORS_ALL.filter(function (r) {
       return scope.some(function (mk) { return r.offices.indexOf(mk) !== -1; });
-    }).sort(function (a, b) { return b.services - a.services; });
+    });
+    var SUP_SORT_ACCESSORS = {
+      name: function (r) { return r.name || ""; }, kind: function (r) { return r.kind || ""; },
+      id: function (r) { return r.id; }, services: function (r) { return r.services; },
+      offices: function (r) { return r.offices.map(function (mk) { return minFullByKey[mk]; }).join(" | "); }
+    };
+    var supSortState = tableSort.tblSupTop;
+    if (supSortState.key && SUP_SORT_ACCESSORS[supSortState.key]) {
+      sortByKey(supRowsAll, SUP_SORT_ACCESSORS[supSortState.key], supSortState.dir);
+    } else {
+      sortByKey(supRowsAll, SUP_SORT_ACCESSORS.services, -1);
+    }
     // החיפוש פועל על שם המפעיל בלבד (תת-מחרוזת, לא תלוי רישיות), ומצומצם לאותו סינון משרד/שנים
     // שכבר חל על שאר הטבלה. ה-export תמיד מתעלם מהחיפוש ומוציא את הרשימה המלאה, כפי שמצוין בכתובית.
     var supSearchClean = supSearchTerm.trim().toLowerCase();
@@ -2189,7 +2274,9 @@ function initApp() {
       ? "נמצאו <b>" + fmtInt(supMatched.length) + "</b> מפעילים התואמים לחיפוש “" + supSearchClean.replace(/[<>&]/g, "") + "”, מתוך <span id=\"supCount\">" + fmtInt(supRowsAll.length) + "</span> מפעילים מזוהים בסינון הנוכחי; ההורדה לאקסל כוללת תמיד את הרשימה המלאה, ללא קשר לסינון או לחיפוש"
       : "מוצגים שלושים המפעילים המובילים לפי מספר שירותים, מתוך <span id=\"supCount\">" + fmtInt(supRowsAll.length) + "</span> מפעילים מזוהים בסינון הנוכחי; ההורדה לאקסל כוללת תמיד את הרשימה המלאה של כלל המפעילים, ללא קשר לסינון או לחיפוש";
     var supRows = supMatched.slice(0, 30);
-    var hs = '<thead><tr><th>#</th><th class="name">מפעיל</th><th>סוג</th><th>מס\' תאגיד</th><th>מס\' שירותים</th><th>משרדים</th></tr></thead><tbody>';
+    var hs = '<thead><tr><th>#</th>' + sortTh("tblSupTop", "name", "מפעיל", ' class="name"') + sortTh("tblSupTop", "kind", "סוג") +
+      sortTh("tblSupTop", "id", "מס' תאגיד") + sortTh("tblSupTop", "services", "מס' שירותים") + sortTh("tblSupTop", "offices", "משרדים") +
+      '</tr></thead><tbody>';
     if (supRows.length === 0) {
       hs += "<tr><td colspan='6' style='text-align:center;color:var(--text-muted);padding:18px'>לא נמצאו מפעילים התואמים לחיפוש</td></tr>";
     }
@@ -2219,7 +2306,7 @@ function initApp() {
     var opLastPct = opParetoShown.length ? opParetoShown[opParetoShown.length - 1].pct : 0;
     var opChartMax = Math.min(100, Math.ceil((opLastPct + 4) / 5) * 5);
     makeLine("chartOperatorConcentration", opParetoShown.map(function (x) { return x.rank; }),
-      [{ label: "אחוז מצטבר", color: cssVar("--s5"), data: opParetoShown.map(function (x) { return +x.pct.toFixed(1); }) }],
+      [{ label: "אחוז מצטבר", color: cssVar("--s7"), data: opParetoShown.map(function (x) { return +x.pct.toFixed(1); }) }],
       { max: opChartMax, percentUnit: true, densePoints: true, xTitle: "מספר המפעילים הגדולים ביותר שנכללים (מדורגים לפי מספר שירותים)", yTitle: "אחוז מצטבר משיוכי מפעיל–שירות", aspectRatio: 1.1 });
     var top10Pct = opParetoFull[9] ? opParetoFull[9].pct : null;
     var top30Pct = opParetoFull[29] ? opParetoFull[29].pct : null;
