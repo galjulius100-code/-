@@ -388,15 +388,6 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
       </div>
     </div>
 
-    <div class="card" style="margin-top:14px">
-      <div class="card-head">
-        <div><div class="card-title">איכות עיצוב מכרזים לפי משרד ועיקרון</div>
-        <div class="card-sub">ציון ממוצע (בסולם 0 עד 4) לכל אחד משישה עקרונות עיצוב מכרז חברתי, כפי שנמדד ופורסם באתר מפתח לרכש חברתי</div></div>
-        <span class="tag-row"><span class="tag external" data-tt="הציונים והמתודולוגיה של שישה העקרונות פורסמו כפי שהם באתר החיצוני; לא חושבו או שוקללו על ידינו. מדגם קטן במיוחד במשרד החינוך (4 מכרזים) ובריאות (9) לעומת רווחה (19).">חיצוני</span><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="התרשים מדרג את המכרזים שפורסמו לפי שישה עקרונות מקובלים לעיצוב מכרז תחרותי ואיכותי, כדי להעריך את מקצועיות תהליך הרכש התחרותי עצמו. הציונים עצמם נקבעו ופורסמו על ידי מפעילי האתר החיצוני, לא על ידינו.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartTenderQuality" data-export-name="איכות עיצוב מכרזים" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span>
-      </div>
-      <canvas id="chartTenderQuality" height="230"></canvas>
-      <div class="src">מקור: אתר מפתח לרכש חברתי (socialpro.org.il), נשלף 22.09.2026. הציון לכל עיקרון הוא ממוצע שפרסם האתר על פני המכרזים שנמדדו בכל משרד; קריטריוני הניקוד המדויקים לכל עיקרון אינם מפורטים באתר המקור מעבר לשם העיקרון עצמו.</div>
-    </div>
   </section>
 
   <section class="screen" id="s3">
@@ -598,15 +589,6 @@ function initApp() {
     education: { nonprofit: 79, company: 46, local: 3, other: 8 }
   };
   var SERVICE_COUNTS = { welfare: 68, health: 38, education: 60 };
-  var TENDER_QUALITY = {
-    welfare: { n: 19, scores: [2.7, 2.8, 2.3, 3.2, 3.3, 2.7] },
-    health: { n: 9, scores: [0.8, 0.5, 1.3, 2.0, 1.3, 1.5] },
-    education: { n: 4, scores: [2.8, 2.3, 2.6, 3.5, 2.2, 1.4] }
-  };
-  var TENDER_PRINCIPLES = [
-    "מקבלי השירות במרכז", "ניהול מוכוון תוצאות", "חדשנות וגמישות",
-    "פיתוח ושימור ידע", "המפעיל כשותף", "תכנון כלכלי ותחרות"
-  ];
   // אמדן חלקי של סוג המפעיל הזוכה ברשומות פטור, מבוסס הצלבת מספר חפ הספק מול מרשם המפעילים
   // (OPERATORS_ALL). total = כלל רשומות הפטור על התקשרות/מיזם באותו משרד (2020-2026, לא כולל
   // מבוטל); identified = מספר הרשומות שההצלבה זיהתה עבורן סוג מפעיל ודאי; breakdown מתייחס
@@ -1880,16 +1862,6 @@ function initApp() {
     document.getElementById("legendJoint").innerHTML = MINISTRIES.filter(function(m){return st.ministry==="all"||m.key===st.ministry;}).map(function (m) {
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + jointVenturePct(m.key, "2020") + "% ← " + jointVenturePct(m.key, "2025") + "%</span>";
     }).join("");
-
-    var tqMinistries = st.ministry === "all" ? MINISTRIES : MINISTRIES.filter(function (m) { return m.key === st.ministry; });
-    var tqSeries = tqMinistries.map(function (m) {
-      return { label: m.label + " (n=" + TENDER_QUALITY[m.key].n + ")", data: TENDER_QUALITY[m.key].scores,
-        color: cssVar(m.color.replace("var(", "").replace(")", "")) };
-    });
-    // קנה המידה מוגדר במפורש ל-0 עד 4 (הסולם המלא שבו נמדדו הציונים), ולא מוסק אוטומטית מהנתונים
-    // בלבד — אחרת ציר ה-Y היה נעצר סביב 3.5 (הציון הגבוה ביותר שבפועל), ומגזים חזותית בהבדלים
-    // הקטנים בין העקרונות בהשוואה לתרשימים אחוזיים סמוכים שתמיד מוצגים על סולם 0 עד 100.
-    makeBar("chartTenderQuality", TENDER_PRINCIPLES, tqSeries, { max: 4, aspectRatio: 3.2 });
 
     // תרשים קבוע לשלושת המשרדים תמיד, בלי קשר לסינון המשרד הגלובלי — כי מטרתו היא בדיוק
     // השוואה ביניהם, ואמדן חלקי כזה לא צריך "להיעלם" כשבוחרים משרד יחיד בסרגל העליון.
