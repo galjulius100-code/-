@@ -1112,9 +1112,22 @@ function initApp() {
     if (!c) return;
     var labels = c.data.labels || [];
     var datasets = c.data.datasets || [];
-    var rows = [["קטגוריה"].concat(datasets.map(function (d, i) { return d.label || (datasets.length === 1 ? name : "סדרה " + (i + 1)); }))];
+    var header = ["קטגוריה"].concat(datasets.map(function (d, i) { return d.label || (datasets.length === 1 ? name : "סדרה " + (i + 1)); }));
+    // c._exportExtra: עמודת נתון נוסף (או מערך של כמה כאלה) שהגרף עצמו אינו מחזיק — לדוגמה תרשים
+    // עוגה שהנתון המוצג בו לצורכי שרטוט הוא אחוז, אך הערך האמיתי מאחוריו (תקציב, מספר רשומות)
+    // ראוי יותר לירידה לאקסל. ראו makeDonut: opts.exportExtra, ו-chartSingle למטה לדוגמת מערך.
+    var extras = c._exportExtra ? (Array.isArray(c._exportExtra) ? c._exportExtra : [c._exportExtra]) : [];
+    extras.forEach(function (ex) { header.push(ex.label); });
+    var rows = [header];
     labels.forEach(function (lbl, i) {
-      rows.push([String(lbl)].concat(datasets.map(function (d) { return d.data[i] != null ? d.data[i] : ""; })));
+      var row = [String(lbl)].concat(datasets.map(function (d, di) {
+        // c._exportPrimary: ערך מדויק לפרוסה הראשונה בעוגה (ראו makeDonut) — הנתון שמצויר בפועל
+        // עשוי להיות מוגדל מלאכותית לפרוסות זעירות כדי שיישארו נראות, וההורדה חייבת את הערך האמיתי.
+        if (di === 0 && c._exportPrimary) return c._exportPrimary[i] != null ? c._exportPrimary[i] : "";
+        return d.data[i] != null ? d.data[i] : "";
+      }));
+      extras.forEach(function (ex) { row.push(ex.values[i] != null ? ex.values[i] : ""); });
+      rows.push(row);
     });
     var csv = rows.map(function (r) { return r.map(csvCell).join(","); }).join("\r\n");
     saveFile(name + ".csv", "﻿" + csv); // BOM כדי שאקסל יקרא נכון עברית
@@ -1440,6 +1453,9 @@ function initApp() {
       },
       plugins: [barValueLabelPlugin, hLinePlugin]
     });
+    // ראו ההערה המקבילה ב-makeDonut/exportChartCSV: עמודת/עמודות נתון נוסף (לדוגמה המספרים
+    // האמיתיים שמאחורי תרשים שמציג אחוזים בלבד) להורדה לאקסל.
+    if (opts.exportExtra) charts[canvasId]._exportExtra = opts.exportExtra;
   }
 
   function makeDonut(canvasId, labels, values, colors, legendElId, amountLabels, opts) {
@@ -1544,7 +1560,7 @@ function initApp() {
     };
     charts[canvasId] = new Chart(ctx, {
       type: "doughnut",
-      data: { labels: labels, datasets: [{ data: renderValues, backgroundColor: colors, borderColor: cssVar("--surface-1"), borderWidth: 3 }] },
+      data: { labels: labels, datasets: [{ label: "אחוז (%)", data: renderValues, backgroundColor: colors, borderColor: cssVar("--surface-1"), borderWidth: 3 }] },
       options: {
         cutout: "62%",
         // aspectRatio מוגדר כך שגובה כרטיס העוגה יתיישר בקירוב לגובה הכרטיס הצמוד אליו (גרף הקו של
@@ -1563,6 +1579,12 @@ function initApp() {
       },
       plugins: [sliceLabelPlugin, centerTextPlugin]
     });
+    // opts.exportExtra: ערך "אמיתי" מאחורי הפרוסות (תקציב, מספר רשומות) להורדה לאקסל, בנוסף
+    // לאחוז שהוא הנתון המוצג בפועל בתרשים עצמו — כדי שההורדה תכיל את שני הנתונים ולא רק את האחוז.
+    if (opts.exportExtra) charts[canvasId]._exportExtra = opts.exportExtra;
+    // הנתון שבאמת מצויר בעוגה (renderValues) מוגדל מלאכותית לפרוסות זעירות כדי שיישארו נראות —
+    // ההורדה לאקסל חייבת להשתמש באחוז האמיתי (values), לא בגרסה המוגדלת לצורך הציור בלבד.
+    charts[canvasId]._exportPrimary = values;
     if (legendElId) {
       var el = document.getElementById(legendElId);
       // opts.legendMinimal: המקרא מציג רק את שם הפרוסה, בלי אחוז/סכום — כשאלה כבר מוצגים בתוך
@@ -1649,6 +1671,9 @@ function initApp() {
           },
           plugins: [miniPctPlugin]
         });
+        // ראו ההערה המקבילה ב-exportChartCSV/makeDonut: עמודת אחוז נוספת להורדה, לצד התקציב
+        // שכבר משמש כנתון הראשי (data) — כך שההורדה תכיל גם וגם, לא רק אחד מהם.
+        charts["chartMinistryHoverMini"]._exportExtra = { label: "אחוז (%)", values: brk.values };
       }
       pop.style.display = "block";
       var popW = pop.offsetWidth || 560, popH = pop.offsetHeight || 480;
@@ -1699,7 +1724,8 @@ function initApp() {
         makeDonut("chartSplitHoverMini", brk.map(function (m) { return m.label; }), brk.map(function (m) { return m.pct; }),
           brk.map(function (m) { return cssVar(m.color.replace("var(", "").replace(")", "")); }),
           "legendSplitHoverMini", brk.map(function (m) { return fmtInt(m.count) + " " + unitWord; }),
-          { aspectRatio: 1.5, disableTooltip: true, centerText: fmtInt(brkTotal), centerSubtext: unitWord });
+          { aspectRatio: 1.5, disableTooltip: true, centerText: fmtInt(brkTotal), centerSubtext: unitWord,
+            exportExtra: { label: unitWord, values: brk.map(function (m) { return m.count; }) } });
       }
       pop.style.display = "block";
       var popW = pop.offsetWidth || 420, popH = pop.offsetHeight || 300;
@@ -1773,13 +1799,14 @@ function initApp() {
     // ההתפלגות תמיד מחושבת מבלוק התקציב (aggregateMinistrySplit) על פני טווח השנים שנבחר, כולל
     // "כל השנים": לפני התיקון, "כל השנים" עבר למקור נקודתי אחר (סכימת 239 השירותים), שאינו תלוי
     // בטווח השנים כלל — כך שבחירת שנים שונות הציגה את אותו תרשים בדיוק תחת תוויות שונות.
-    var mLabels, mValues, mColors, mAmounts, centerParts;
+    var mLabels, mValues, mColors, mAmounts, mRawAmounts, centerParts;
     var splitByMinistry = aggregateMinistrySplit(years);
     var titleMS = document.getElementById("titleMinistrySplit");
     if (st.ministry === "all") {
       mLabels = splitByMinistry.map(function (r) { return r.label; });
       mValues = splitByMinistry.map(function (r) { return r.pct; });
       mColors = splitByMinistry.map(function (r) { return cssVar(r.color.replace("var(", "").replace(")", "")); });
+      mRawAmounts = splitByMinistry.map(function (r) { return +(r.amount * opF).toFixed(3); });
       mAmounts = splitByMinistry.map(function (r) { return formatBillions(r.amount * opF); });
       titleMS.textContent = "התפלגות רכש לפי משרד";
       var grandTotal = splitByMinistry.reduce(function (s, r) { return s + r.amount; }, 0) * opF;
@@ -1790,12 +1817,14 @@ function initApp() {
       mLabels = brk.labels;
       mValues = brk.values;
       mColors = SERVICE_PALETTE.slice(0, mLabels.length);
+      mRawAmounts = brk.amounts;
       mAmounts = brk.amounts.map(function (a) { return formatBillions(a / 1e9); });
       titleMS.textContent = "התפלגות תקציב השירותים העיקריים — " + mm2.label;
       centerParts = formatBillionsParts(brk.total / 1e9);
     }
     makeDonut("chartMinistrySplit", mLabels, mValues, mColors, "legendMinistrySplit", mAmounts,
-      Object.assign({ centerText: centerParts.value, centerSubtext: centerParts.unit },
+      Object.assign({ centerText: centerParts.value, centerSubtext: centerParts.unit,
+          exportExtra: { label: st.ministry === "all" ? "תקציב (מיליארדי ש״ח)" : "תקציב (ש״ח)", values: mRawAmounts } },
         st.ministry === "all" ? { disableTooltip: true } : { disableTooltip: true, pctOnlyInside: true, legendMinimal: true }));
     wireMinistryHover();
     var tagMS = document.getElementById("tagMinistrySplit");
@@ -2059,7 +2088,8 @@ function initApp() {
     makeDonut("chartExemptSplit", topLevel.labels, topLevel.values,
       [cssVar("--s1"), cssVar("--s2"), cssVar("--s3"), cssVar("--s4")].slice(0, topLevel.labels.length),
       "legendExemptSplit", topLevel.counts.map(function (n) { return n + " רשומות"; }),
-      { centerText: fmtInt(splitTotal), centerSubtext: "הליכים בסך הכול", disableTooltip: true });
+      { centerText: fmtInt(splitTotal), centerSubtext: "הליכים בסך הכול", disableTooltip: true,
+        exportExtra: { label: "מספר הליכים", values: topLevel.counts } });
     wireExemptSplitHover();
     document.getElementById("exemptSplitSrc").textContent = "מקור: ייצוא מנהל הרכש הממשלתי — שני קבצים: רשומות פטור (28.10.2026) ומכרזים פומביים (01.11.2026). מבוסס על " + fmtInt(splitTotal) + " רשומות בסינון הנוכחי. רשומות \"כוונת התקשרות\" ו\"מיזם ללא כוונת רווח\" אינן נכללות, בהיותן פרסום מקדים ולא התקשרות שהושלמה; רשומות שעילתן \"מימוש זכות ברירה (אופציה)\" אינן נכללות אף הן, בהיותן מימוש סעיף מתוך מכרז קיים ולא התקשרות עצמאית — הוצאו כבר בשלב בניית הנתונים ולא רק כאן.";
 
@@ -2196,7 +2226,13 @@ function initApp() {
       { valueLabels: [
           singleServicesPct.map(function (v) { return v + "%"; }),
           singleBudgetPct.map(function (v) { return fmt(v, 1) + "%"; })
-        ], hideLegend: true });
+        ], hideLegend: true,
+        exportExtra: [
+          { label: "מספר שירותים בידי גורם יחיד", values: mins.map(function (m) { return singleOpStats(m.key).n; }) },
+          { label: "סך שירותים במשרד", values: mins.map(function (m) { return singleOpStats(m.key).tot; }) },
+          { label: "תקציב בידי גורם יחיד (ש״ח)", values: mins.map(function (m) { return singleOpStats(m.key).budget; }) },
+          { label: "תקציב כולל המשרד (ש״ח)", values: mins.map(function (m) { return singleOpStats(m.key).minBudget; }) }
+        ] });
     document.getElementById("legendSingle").innerHTML =
       '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar("--s4") + '"></span>אחוז השירותים המופעלים בידי גורם יחיד</span>' +
       '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar("--good") + '"></span>משקלם הכספי מתוך תקציב הרכש החברתי של המשרד</span>';
