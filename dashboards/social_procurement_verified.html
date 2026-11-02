@@ -171,10 +171,16 @@ thead th.sort-active{color:var(--accent)}
 .sort-ind{display:inline-block;margin-inline-start:4px;font-size:13px;line-height:1;color:var(--accent);opacity:.75}
 thead th.sortable:hover .sort-ind{opacity:1}
 .sort-ind.active{opacity:1;font-size:12px;color:var(--accent)}
-.pareto-badges{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.pareto-badge{flex:1;min-width:140px;background:var(--surface-2);border:1px solid var(--accent);border-radius:10px;padding:8px 12px;text-align:center}
-.pareto-badge .num{font-size:21px;font-weight:800;color:var(--accent);line-height:1.2}
-.pareto-badge .sub{font-size:11.5px;color:var(--text-secondary);line-height:1.4;margin-top:2px}
+.tier-row{margin-bottom:16px}
+.tier-row:last-child{margin-bottom:4px}
+.tier-row-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.tier-row-label{font-size:13px;font-weight:700;color:var(--text-primary)}
+.tier-row-count{font-size:11px;color:var(--text-muted)}
+.tier-bar{display:flex;width:100%;height:30px;border-radius:7px;overflow:hidden;background:var(--surface-2)}
+.tier-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;cursor:default}
+.tier-caption{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:6px;font-size:11px;color:var(--text-secondary)}
+.tier-cap-item{display:inline-flex;align-items:center;gap:5px}
+.tier-cap-item i{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
 tbody tr{border-bottom:1px solid var(--grid)}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--surface-hover)}
@@ -289,13 +295,12 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
     </div>
 
     <div class="card" style="margin-top:14px">
-        <div class="card-head"><div><div class="card-title">ריכוזיות תקציבית בין שירותים (עקומת פארטו)</div>
-        <div class="card-sub">התרשים בא לבדוק אם תקציב הרכש החברתי מרוכז במספר קטן של שירותים גדולים, או מפוזר על פני שירותים רבים וקטנים — שאלה מדיניותית חשובה, כי ריכוזיות גבוהה מגדילה את הרגישות התקציבית לשינויים בשירות בודד. עקומת פארטו: השירותים בכל משרד מדורגים בסדר יורד לפי תקציב, וכל נקודה על העקומה מציגה את שיעור התקציב המצטבר עד לאותו דירוג, מחושב מתוך תקציב אותו משרד בלבד — כך שהנקודה מעל הערך 5 בעקומת משרד נתון משקפת את חלקם של חמשת השירותים בעלי התקציב הגבוה ביותר באותו משרד מתוך סך הרכש שלו, ולא ממוצע או חלוקה שווה בין השירותים. לצד עקומת "כל המשרדים" המשולבת (כלל 239 השירותים יחד) מוצגת עקומה נפרדת לכל אחד משלושת המשרדים, כדי שניתן יהיה להשוות את מידת הריכוזיות ביניהם. שיפוע תלול בתחילת עקומה מעיד על ריכוזיות תקציבית גבוהה במספר מצומצם של שירותים; עלייה מתונה לאורך כל הטווח מעידה על פיזור רחב יותר.</div></div>
-        <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="מיון 239 השירותים לפי תקציב בסדר יורד וסכימה מצטברת. עקומת פארטו בודקת עד כמה הרכש מרוכז במספר קטן של שירותים גדולים, לעומת פיזור רחב על פני שירותים רבים וקטנים. ממצא: שירות בודד (הגדול ביותר) מהווה כחמישית מכלל הרכש, וחמישה עשר שירותים בלבד (מתוך 239) מהווים כארבע חמישיות ממנו — ריכוזיות גבוהה המוסברת בהמשך הכרטיס.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartPareto" data-export-name="ריכוזיות תקציבית - עקומת פארטו" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
-        <div class="pareto-badges" id="paretoMilestones"></div>
-        <canvas id="chartPareto" height="200"></canvas>
-        <div style="font-size:11.5px;color:var(--accent);font-weight:600;margin-top:8px;line-height:1.6">ריכוזיות תקציבית גבוהה בקרב מספר מצומצם של שירותים אינה ליקוי בניהול התקציבי. היא נובעת בעיקר מהבדלי עלות מבניים בין סוגי השירותים: מסגרות חוץ-ביתיות ואשפוזיות, כגון פנימיות והוסטלים, יקרות משמעותית לנפש בהשוואה לשירותים קהילתיים המשרתים אוכלוסייה רחבה יותר.</div>
-        <div class="src">מקור: 239 שירותים, מפתח לרכש חברתי. ציר ה-X מוצג עד דירוג 100 בלבד (לא עד 239), כדי למקד בטווח שבו העקומה עדיין עולה בשיפוע משמעותי. שימו לב: הורדת הנתונים לאקסל של תרשים זה כוללת רק את 100 הדירוגים המוצגים, לא את כל 239 השירותים.</div>
+        <div class="card-head"><div><div class="card-title">ריכוזיות תקציבית בין שירותים</div>
+        <div class="card-sub">כל פס מייצג 100% מתקציב הרכש החברתי של אותו היקף (כל המשרדים, או משרד בודד), מחולק לפי שכבות דירוג: השירות הגדול ביותר, דירוג 2–5, דירוג 6–15, דירוג 16–50, ודירוג 51 ואילך. רוחב כל פלח הוא ממש נתח התקציב שלו — כך שגודל הפלח הראשון מול אורך "הזנב" האפור מראה במבט אחד עד כמה מעט שירותים גדולים אחראים לחלק נכבד מהתקציב, בלי צורך לקרוא שום ציר.</div></div>
+        <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="כל 239 השירותים מדורגים בסדר יורד לפי תקציב ומחולקים לחמש שכבות דירוג קבועות; גודל כל פלח בפס משקף את נתח התקציב של אותה שכבה בלבד (לא מצטבר). ממצא: השירות הבודד הגדול ביותר מהווה כחמישית מכלל הרכש, וחמישה עשר השירותים הגדולים ביותר (מתוך 239) מהווים כארבע חמישיות ממנו.">i</button><button type="button" class="export-btn" data-export-type="custom" data-export-target="tierConcentration" data-export-name="ריכוזיות תקציבית - פסי הרכב" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
+        <div id="tierConcentrationRows"></div>
+        <div style="font-size:11.5px;color:var(--accent);font-weight:600;margin-top:4px;line-height:1.6">ריכוזיות תקציבית גבוהה בקרב מספר מצומצם של שירותים אינה ליקוי בניהול התקציבי. היא נובעת בעיקר מהבדלי עלות מבניים בין סוגי השירותים: מסגרות חוץ-ביתיות ואשפוזיות, כגון פנימיות והוסטלים, יקרות משמעותית לנפש בהשוואה לשירותים קהילתיים המשרתים אוכלוסייה רחבה יותר.</div>
+        <div class="src">מקור: 239 שירותים, מפתח לרכש חברתי. שכבות הדירוג (1 / 2–5 / 6–15 / 16–50 / 51 ואילך) קבועות בכל הפסים, כדי שניתן יהיה להשוות ישירות בין המשרדים; מספר השירותים הכלולים בכל שכבה בפועל (ולא רק האחוז) מופיע בכתובית מתחת לכל פס ובהצבעה עם העכבר מעל כל פלח.</div>
     </div>
 
     <div class="card" style="margin-top:14px">
@@ -1201,6 +1206,7 @@ function initApp() {
     else if (type === "table" && target === "tblTopServices") exportTopServicesCSV(name);
     else if (type === "table" && target === "tblConc") exportConcCSV(name);
     else if (type === "table") exportTableCSV(target, name);
+    else if (type === "custom" && target === "tierConcentration") exportTierConcentrationCSV(name);
   });
 
   var topServicesExpandBtn = document.getElementById("topServicesExpandBtn");
@@ -1982,52 +1988,7 @@ function initApp() {
       return '<span class="legend-item"><span class="legend-swatch" style="background:' + cssVar(m.color.replace("var(", "").replace(")", "")) + '"></span>' + m.label + " — " + fmt(approvedIntensity(m.key, 2025),1) + "% ב-2025</span>";
     }).join("");
 
-    // חושב מחדש כאן בחיוג מלא (239 נקודות, לא מדגם מצומצם כמו D.pareto) כדי שניתן יהיה להציב
-    // לצד עקומת כלל המשרדים גם עקומה נפרדת לכל משרד בנפרד, על אותו ציר דירוג (1 עד 239) — עקומת
-    // משרד בודד נעצרת ב-null מעבר למספר השירותים שלו עצמו, ולכן אינה "ממשיכה" באופן מטעה לאחור.
-    var paretoAllSorted = SERVICES.slice().sort(function (a, b) { return b.budget - a.budget; });
-    var paretoAllTotal = paretoAllSorted.reduce(function (s, x) { return s + x.budget; }, 0);
-    var paretoCumAll = 0;
-    var paretoAllPts = paretoAllSorted.map(function (s) { paretoCumAll += s.budget; return +(paretoCumAll / paretoAllTotal * 100).toFixed(1); });
-    // ציר ה-X מוצג רק עד דירוג 100 (לא עד 239): השיפוע המשמעותי של העקומה מרוכז כולו בטווח הזה,
-    // והזנב השטוח שאחריו (שבו העקומה כבר קרובה ל-100%) רק "מותח" את התרשים בלי תוכן חדש.
-    var paretoDisplayLimit = Math.min(100, paretoAllPts.length);
-    paretoAllPts = paretoAllPts.slice(0, paretoDisplayLimit);
-    var paretoLabels = paretoAllPts.map(function (_, i) { return i + 1; });
-    function ministryParetoPts(mKey) {
-      var list = SERVICES.filter(function (s) { return s.ministry === mKey; }).slice().sort(function (a, b) { return b.budget - a.budget; });
-      var total = list.reduce(function (s, x) { return s + x.budget; }, 0);
-      var cum = 0;
-      return list.map(function (s) { cum += s.budget; return total ? +(cum / total * 100).toFixed(1) : 0; }).slice(0, paretoDisplayLimit);
-    }
-    var paretoSeries = [{ label: "כל המשרדים", color: cssVar("--s2"), data: paretoAllPts }];
-    // מחובר לסרגל סינון המשרד שבסרגל העליון, כמו שאר תרשימי מסך 1: במשרד ספציפי מוצגות רק עקומת
-    // כלל המשרדים ועקומת המשרד הנבחר; ב"הכל" מוצגות כל ארבע העקומות יחד.
-    var paretoMinistries = st.ministry === "all" ? MINISTRIES : MINISTRIES.filter(function (m) { return m.key === st.ministry; });
-    paretoMinistries.forEach(function (m) {
-      var pts = ministryParetoPts(m.key);
-      paretoSeries.push({ label: m.label, color: cssVar(m.color.replace("var(", "").replace(")", "")),
-        data: paretoLabels.map(function (_, i) { return i < pts.length ? pts[i] : null; }) });
-    });
-    // מתרגם את העקומה המצטברת (שדורשת לעקוב בעין בין שני הצירים) לכמה עובדות קונקרטיות שאפשר
-    // לקלוט במבט אחד: "כמה שירותים מספיקים כדי לכסות X% מהתקציב" — ישירות לשאלת המדיניות שהעקומה
-    // נועדה לענות עליה, בלי תיווך גרפי. מסומן גם כקו אנכי מקביל על גבי התרשים עצמו (opts.vLines).
-    function paretoRankForThreshold(pts, threshold) {
-      for (var i = 0; i < pts.length; i++) { if (pts[i] >= threshold) return i + 1; }
-      return null;
-    }
-    var paretoMilestoneDefs = [50, 80, 95];
-    var paretoMilestones = paretoMilestoneDefs.map(function (th) {
-      return { threshold: th, rank: paretoRankForThreshold(paretoAllPts, th) };
-    }).filter(function (m) { return m.rank != null; });
-    document.getElementById("paretoMilestones").innerHTML = paretoMilestones.map(function (m) {
-      return '<div class="pareto-badge"><div class="num">' + fmtInt(m.rank) + '</div><div class="sub">שירותים (מתוך ' + fmtInt(paretoAllSorted.length) + ') מכסים ' + m.threshold + '% מהתקציב</div></div>';
-    }).join("");
-    var paretoVLines = paretoMilestones.map(function (m) {
-      return { rank: m.rank, label: m.rank + " ← " + m.threshold + "%" };
-    });
-    makeLine("chartPareto", paretoLabels, paretoSeries,
-      { yMax: 100, min: 10, beginAtZero: false, percentUnit: true, densePoints: true, xTitle: "מספר השירותים הגדולים ביותר שנכללים", yTitle: "אחוז מצטבר מסך הרכש", aspectRatio: 2.6, vLines: paretoVLines });
+    renderTierConcentration(st);
 
 
     renderTopServicesTable();
@@ -2040,6 +2001,61 @@ function initApp() {
       [{ label: "תקציב", color: cssVar("--s5"), data: BY_SUBJECT_EXTERNAL.map(function (x) { return x.budget; }) }], { horizontal: true, scaleBillions: true });
     makeBar("chartByInterv", BY_INTERV_EXTERNAL.map(function (x) { return x.tag; }),
       [{ label: "תקציב", color: cssVar("--s7"), data: BY_INTERV_EXTERNAL.map(function (x) { return x.budget; }) }], { horizontal: true, scaleBillions: true, truncateAxisLabels: 30 });
+  }
+
+  // שכבות דירוג קבועות לפס הרכב הריכוזיות (ראו renderTierConcentration): זהות בכל הפסים (כל
+  // המשרדים ולכל משרד בנפרד) כדי שניתן יהיה להשוות ישירות בין פס לפס. "עד" (to) הוא לא-כולל,
+  // כך ש-{from:0,to:1} פירושו השירות הראשון בדירוג בלבד.
+  var TIER_DEFS = [
+    { from: 0, to: 1, label: "השירות הגדול ביותר", color: "--critical" },
+    { from: 1, to: 5, label: "דירוג 2–5", color: "--s2" },
+    { from: 5, to: 15, label: "דירוג 6–15", color: "--s4" },
+    { from: 15, to: 50, label: "דירוג 16–50", color: "--s3" },
+    { from: 50, to: Infinity, label: "דירוג 51 ואילך", color: "--text-muted" }
+  ];
+  function tierBreakdown(sortedList) {
+    var total = sortedList.reduce(function (s, x) { return s + x.budget; }, 0);
+    return TIER_DEFS.map(function (t) {
+      var to = Math.min(t.to, sortedList.length);
+      var slice = t.from < sortedList.length ? sortedList.slice(t.from, to) : [];
+      var sum = slice.reduce(function (s, x) { return s + x.budget; }, 0);
+      return { label: t.label, color: t.color, count: slice.length, pct: total ? sum / total * 100 : 0, budget: sum };
+    }).filter(function (x) { return x.count > 0; });
+  }
+  // מחליף עקומת פארטו מצטברת (שדרשה לעקוב בעין בין שני צירים כדי לחלץ מסקנה) בפס הרכב ישיר: כל
+  // פלח בפס הוא ממש נתח התקציב של אותה שכבת דירוג, כך שגודלו היחסי נקרא במבט אחד בלי תיווך גרפי.
+  function renderTierConcentration(st) {
+    var allSorted = SERVICES.slice().sort(function (a, b) { return b.budget - a.budget; });
+    var entities = [{ label: "כל המשרדים", list: allSorted }];
+    (st.ministry === "all" ? MINISTRIES : MINISTRIES.filter(function (m) { return m.key === st.ministry; })).forEach(function (m) {
+      entities.push({ label: m.label, list: allSorted.filter(function (s) { return s.ministry === m.key; }) });
+    });
+    var exportRows = [];
+    var html = entities.map(function (e) {
+      var tiers = tierBreakdown(e.list);
+      var bar = tiers.map(function (t) {
+        var text = t.pct >= 8 ? fmt(t.pct, 0) + "%" : "";
+        return '<div class="tier-seg" style="width:' + t.pct + '%;background:' + cssVar(t.color) + '" title="' + t.label + ' (' + fmtInt(t.count) + ' שירותים) — ' + fmt(t.pct, 1) + '% מהתקציב">' + text + '</div>';
+      }).join("");
+      var caption = tiers.map(function (t) {
+        return '<span class="tier-cap-item"><i style="background:' + cssVar(t.color) + '"></i>' + t.label + ' (' + fmtInt(t.count) + ') — ' + fmt(t.pct, 1) + '%</span>';
+      }).join("");
+      tiers.forEach(function (t) {
+        exportRows.push({ entity: e.label, tier: t.label, count: t.count, pct: +t.pct.toFixed(1), budget: Math.round(t.budget) });
+      });
+      return '<div class="tier-row"><div class="tier-row-head"><span class="tier-row-label">' + e.label + '</span><span class="tier-row-count">' + fmtInt(e.list.length) + ' שירותים</span></div>' +
+        '<div class="tier-bar">' + bar + '</div><div class="tier-caption">' + caption + '</div></div>';
+    }).join("");
+    document.getElementById("tierConcentrationRows").innerHTML = html;
+    window.__tierConcentrationExport = exportRows;
+  }
+  function exportTierConcentrationCSV(name) {
+    var rows = window.__tierConcentrationExport || [];
+    var out = [["היקף", "שכבת דירוג", "מספר שירותים", "אחוז מהתקציב (%)", "תקציב (ש״ח)"]].concat(
+      rows.map(function (r) { return [r.entity, r.tier, r.count, r.pct, r.budget]; })
+    );
+    var csv = out.map(function (r) { return r.map(csvCell).join(","); }).join("\r\n");
+    saveFile(name + ".csv", "﻿" + csv);
   }
 
   function renderTopServicesTable() {
