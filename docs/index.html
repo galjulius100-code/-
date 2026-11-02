@@ -110,40 +110,14 @@ a{color:var(--accent)}
 .cols-2{grid-template-columns:repeat(2,1fr)}
 @media(max-width:1100px){.cols-5{grid-template-columns:repeat(3,1fr)}.cols-4{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.cols-5,.cols-4,.cols-3,.cols-2{grid-template-columns:1fr}}
-/* מתחת לרוחב הזה, כל הטקסט והריפוד הקבוע בעמוד (לא רק בתוך הקנבס, ראו chartScale) מוקטנים
-   ביחד באופן גורף — בקשה מפורשת של המשתמש אחרי שתיקון נקודתי גרף-אחר-גרף לא הספיק: "שהכל
-   יהיה קטן יותר בגרסה של הטלפון" במקום לרדוף כל רכיב בנפרד. */
 @media(max-width:640px){
   .topbar-inner{gap:10px;padding:10px 14px}
   .brand{flex:1 1 100%}
-  .brand-badge{height:28px;font-size:11px;padding:0 9px}
-  .brand-text .t1{font-size:9.5px}
-  .brand-text .t2{font-size:13px}
   .screen-count-label{display:none}
   .nav-tabs{flex:1 1 100%;order:2;padding-bottom:2px}
-  .nav-tab{font-size:12px;padding:7px 10px}
-  .filterbar{padding:12px 14px 0;gap:8px}
-  .seg button{font-size:11.5px;padding:5px 9px}
-  .filter-label{font-size:10px}
-  .year-chip{font-size:10.5px;padding:4px 8px}
+  .filterbar{padding:12px 14px 0;gap:10px}
   .page{padding:14px 14px 60px}
-  .card{padding:12px}
-  .card-title{font-size:13.5px}
-  .card-sub{font-size:12px}
-  .kpi-value{font-size:21px}
-  .kpi-label{font-size:11.5px}
-  .kpi-unit{font-size:12px}
-  .intro-note,.scope-warning{font-size:12px;padding:11px 14px}
-  .legend-item{font-size:11px}
-  .src{font-size:10.5px}
-  .tier-row-label{font-size:12px}
-  .tier-caption{font-size:10.5px}
-  /* העוגות הצפות בריחוף: ברוחב טלפון מוגבלות לרוחב קבוע וצר בהרבה מ-560px/420px, כי ממילא
-     אין "ריחוף" אמיתי במגע — הן נפתחות בהקשה ונשארות קטנות דיין כדי שלא לכסות את המסך כולו. */
-  .hover-pop{width:min(300px, calc(100vw - 32px));padding:12px 14px}
-  .hover-pop .hover-pop-title{font-size:12.5px}
 }
-
 .card{background:var(--surface-1);border:1px solid var(--card-border);border-radius:16px;padding:16px;
   box-shadow:var(--shadow);min-width:0;display:flex;flex-direction:column}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px}
@@ -235,6 +209,44 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
 
 .stage{font-size:9.5px;background:var(--frame-bg);color:var(--frame-fg);padding:1px 7px;border-radius:999px;margin-inline-start:6px;font-weight:700}
 .footer-note{margin-top:26px;font-size:12px;color:var(--text-muted);text-align:center;line-height:1.85}
+
+/* מתחת לרוחב הזה, כל הטקסט והריפוד הקבוע בעמוד (לא רק בתוך הקנבס, ראו chartScale ב-JS) מוקטנים
+   ביחד באופן גורף — בקשה מפורשת של המשתמש: "שהכל יהיה קטן יותר בגרסה של הטלפון" במקום לרדוף
+   רכיב-רכיב. הבלוק הזה חייב לבוא אחרי כל הכללים הלא-מותנים שהוא דורס (לא רק בתוך media query
+   — גם אחריהם במקור הגיליון), אחרת הכלל המאוחר-יותר-במקור מנצח גם כשהוא פחות ספציפי לרוחב
+   המסך הנוכחי; זו בדיוק הסיבה שגרסה קודמת של הבלוק הזה (שהוכנס מוקדם מדי בגיליון) לא עבדה בפועל.
+   nav-tab/seg/year-chip/brand-badge כבר מוגדרים לפני media query זה, כך שאין צורך להזיז אותם. */
+@media(max-width:640px){
+  .brand-badge{height:28px;font-size:11px;padding:0 9px}
+  .brand-text .t1{font-size:9.5px}
+  .brand-text .t2{font-size:13px}
+  .nav-tab{font-size:12px;padding:7px 10px}
+  .seg button{font-size:11.5px;padding:5px 9px}
+  .filter-label{font-size:10px}
+  .year-chip{font-size:10.5px;padding:4px 8px}
+  .card{padding:12px}
+  .card-title{font-size:13.5px}
+  .card-sub{font-size:12px}
+  .kpi-value{font-size:21px}
+  .kpi-label{font-size:11.5px}
+  .kpi-unit{font-size:12px}
+  .intro-note,.scope-warning{font-size:12px;padding:11px 14px}
+  .legend-item{font-size:11px}
+  .src{font-size:10.5px}
+  .tier-row-label{font-size:12px}
+  .tier-caption{font-size:10.5px}
+  /* טבלאות: גם עם פחות ריפוד וגופן קטן יותר, רוב הטבלאות (6-8 עמודות) עדיין רחבות מהמסך
+     ודורשות גלילה אופקית בתוך .scroll-x — אבל כך נכנסות יותר עמודות לפני שצריך לגלול בכלל,
+     וה-td.name לא "בולע" את מרבית הרוחב הזמין לבדו. */
+  table{font-size:11px}
+  th,td{padding:6px 7px}
+  td.name{min-width:120px}
+  thead th{font-size:9.5px}
+  /* העוגות הצפות בריחוף: ברוחב טלפון מוגבלות לרוחב קבוע וצר בהרבה מ-560px/420px, כי ממילא
+     אין "ריחוף" אמיתי במגע — הן נפתחות בהקשה ונשארות קטנות דיין כדי שלא לכסות את המסך כולו. */
+  .hover-pop{width:min(300px, calc(100vw - 32px));padding:12px 14px}
+  .hover-pop .hover-pop-title{font-size:12.5px}
+}
 </style>
 </head>
 <body>
