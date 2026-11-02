@@ -247,6 +247,12 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
   .hover-pop{width:min(300px, calc(100vw - 32px));padding:12px 14px}
   .hover-pop .hover-pop-title{font-size:12.5px}
 }
+/* במסך מחשב (מעל breakpoint הטאבלט) מוגדל הדשבורד פי 1.1 ביחס לרנדור הרגיל של הדפדפן, כדי
+   שברירת המחדל (זום 100%) תיראה כמו שהמשתמש ציין שהיא הכי קריאה (זום 110% ידני). zoom, לא
+   transform:scale, כדי שהעמוד יישאר זורם כרגיל (ללא שוליים ריקים/חיתוך), בדיוק כמו זום דפדפן אמיתי. */
+@media(min-width:1101px){
+  body{zoom:1.1}
+}
 </style>
 </head>
 <body>
