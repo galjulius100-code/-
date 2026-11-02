@@ -1557,6 +1557,12 @@ function initApp() {
                 : opts.horizontal && opts.scaleBillions ? { display: true, text: "מיליארדי ש״ח", color: cssVar("--text-muted"), font: { size: 13.5 } }
                 : undefined },
           y: { grid: opts.horizontal ? { display: false } : baseGrid(), max: !opts.horizontal ? opts.max : undefined,
+              // opts.categoryColumnWidth: Chart.js מצמצם את רוחב עמודת התוויות הקטגוריאליות ככל
+              // שגדל opts.leftPadding הסמוך (שניהם מתחרים על אותו שטח פנוי בקנבס) — ולכן הגדלת
+              // leftPadding בלבד לא מרחיבה בפועל את מקום הכתיבה של תוויות ארוכות. afterFit קובע
+              // רוחב קבוע לעמודה, בלי תלות בחישוב האוטומטי של Chart.js, כדי שתוויות ארוכות (כגון
+              // "מינוי מומחים / ועדות רפואיות") לא ייחתכו.
+              afterFit: opts.horizontal && opts.categoryColumnWidth ? function (scale) { scale.width = opts.categoryColumnWidth * scl; } : undefined,
               // opts.categoryFontSize: מקטין את גופן תוויות הציר הקטגוריאלי (שמות העילות/השירותים
               // בצד שמאל של תרשים אופקי), כשהתוויות ארוכות מכדי להיכנס בנוחות בגודל הגופן הרגיל.
               ticks: Object.assign({}, !opts.horizontal && opts.scaleMillions
@@ -2310,7 +2316,7 @@ function initApp() {
       return GROUND_REGULATION[l] ? base + " — " + GROUND_REGULATION[l] : base;
     });
     makeBar("chartExemptGrounds", ground.labels, [{ label: "מספר רשומות", data: ground.counts, color: groundWarmPalette.slice(0, ground.labels.length) }],
-      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, leftPadding: 50, categoryFontSize: 13.5, disableTooltip: true,
+      { horizontal: true, valueLabels: groundValueLabels, valueLabelPadding: 230, leftPadding: 4, categoryColumnWidth: 190, categoryFontSize: 13.5, disableTooltip: true,
         exportExtra: [
           { label: "אחוז מכלל הפטורים (%)", values: ground.values.map(function (v) { return +v.toFixed(1); }) },
           { label: "תקנה", values: ground.labels.map(function (l) { return GROUND_REGULATION[l] || ""; }) }
