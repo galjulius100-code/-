@@ -123,7 +123,7 @@ a{color:var(--accent)}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px}
 .card-title{font-size:15.5px;font-weight:700}
 .card-sub{font-size:14.5px;color:var(--text-muted);margin-top:3px;line-height:1.5}
-.hover-pop{position:fixed;z-index:80;pointer-events:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;width:560px;max-width:calc(100vw - 24px)}
+.hover-pop{position:fixed;z-index:80;pointer-events:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;width:560px;max-width:calc(100vw - 24px);max-height:calc(100vh - 24px);overflow:auto}
 .hover-pop .hover-pop-title{font-size:14.5px;font-weight:700;color:var(--text-primary);margin-bottom:6px;text-align:center}
 .card-body{flex:1;min-width:0}
 .intro-note{background:var(--accent-soft);border-inline-start:3px solid var(--accent);border-radius:12px;
@@ -1133,6 +1133,36 @@ function initApp() {
   });
 
   /* ================= TOOLTIP ================= */
+  // מידוד משותף לכל חלונית צפה (הסבר i, תיאור הובר) שממוקמת לפי מיקום עכבר/עוגן: מבטיח שהיא
+  // לעולם לא תימצב חלקית או כולה מחוץ לגבולות המסך, גם אם הרוחב/גובה שהונח מראש (למשל קבוע
+  // קבוע כברירת מחדל) אינו מדויק — כי w/h עצמם נהדקים לגבולות המסך לפני חישוב ה-x/y, כך
+  // שהטווח המותר לעולם אינו "מתהפך" (גבול תחתון גדול מהעליון) ולא גולש בכל זאת מעבר לקצה.
+  function clampToViewport(x, y, w, h, margin) {
+    margin = margin || 8;
+    var cw = Math.min(w, window.innerWidth - margin * 2);
+    var ch = Math.min(h, window.innerHeight - margin * 2);
+    return {
+      x: Math.max(margin, Math.min(x, window.innerWidth - cw - margin)),
+      y: Math.max(margin, Math.min(y, window.innerHeight - ch - margin))
+    };
+  }
+  // כש-pop מכיל גרף Chart.js שזה עתה נבנה (עוגת הריחוף הקטנה), הגובה הסופי שלו אינו מוכן מיד:
+  // נצפה לגדול בהדרגה על פני כמה פריימים (בדיקה בפועל הראתה רצף כמו 59px ← 84px ← 109px ← ...
+  // ← 404px), ולא רק בפריים אחד בודד — ולכן תיקון חד-פעמי אחרי requestAnimationFrame יחיד עדיין
+  // תופס מידה חלקית ומייצר הידוק שגוי. settleAndReclamp חוזרת על המדידה וההידוק לאורך כמה
+  // פריימים (עד שהגובה מפסיק להשתנות, או עד למספר נסיונות מרבי כרשת ביטחון) כדי שההידוק הסופי
+  // תמיד יתבסס על הגובה האמיתי והיציב של התוכן.
+  function settleAndReclamp(pop, guessX, guessY, triesLeft) {
+    requestAnimationFrame(function () {
+      if (pop.style.display === "none") return;
+      var p = clampToViewport(parseFloat(pop.style.left) || guessX, parseFloat(pop.style.top) || guessY, pop.offsetWidth, pop.offsetHeight);
+      pop.style.left = p.x + "px"; pop.style.top = p.y + "px";
+      // הגובה אינו גדל ברצף צפוי מפריים לפריים (נצפה: קפיצה בודדת אחרי השהייה, לא גידול הדרגתי
+      // רציף) — לכן אי אפשר לעצור את ההידוק המחדש מוקדם רק כי שתי מדידות עוקבות זהות; ממשיכים
+      // עד תום מכסת הנסיונות הקבועה, שמכסה כ-400ms בקצב 60fps, מרווח שהתברר מספיק בפועל.
+      if (triesLeft > 0) settleAndReclamp(pop, p.x, p.y, triesLeft - 1);
+    });
+  }
   // נגישות: ריחוף עכבר בלבד לא נגיש במגע (טלפון) ולא במקלדת, לכן מתווספים כאן גם מיקוד וגם הקשה/לחיצה.
   var tt = document.getElementById("tt");
   var ttText = document.getElementById("ttText");
@@ -1141,8 +1171,11 @@ function initApp() {
   function showTT(el, anchorRect) {
     ttText.textContent = el.getAttribute("data-tt"); tt.style.opacity = 1; tt.style.pointerEvents = "auto"; ttOwner = el;
     if (anchorRect) {
-      tt.style.left = Math.min(anchorRect.left, window.innerWidth - 310) + "px";
-      tt.style.top = Math.min(anchorRect.bottom + 8, window.innerHeight - 90) + "px";
+      // נמדד בפועל (לא קבוע מוכן-מראש): ל-#tt יש max-width:320px אך הרוחב בפועל עשוי להיות צר
+      // יותר (טקסט קצר) או להגיע בדיוק ל-320px — קבוע ישן של 310px הניח בטעות רוחב מקסימלי
+      // נמוך מדי, ולכן החלונית חרגה בכ-10px מעבר לקצה הימני בכל פעם שהגיעה לרוחב המקסימלי.
+      var p = clampToViewport(anchorRect.left, anchorRect.bottom + 8, tt.offsetWidth, tt.offsetHeight);
+      tt.style.left = p.x + "px"; tt.style.top = p.y + "px";
     }
   }
   function hideTT() { tt.style.opacity = 0; tt.style.pointerEvents = "none"; ttOwner = null; ttPinned = false; }
@@ -1155,8 +1188,8 @@ function initApp() {
     if (tt.style.opacity != "1") return;
     if (ttPinned) return; // חלונית שנעוצה בהקשה נשארת במקומה, כדי שהעכבר יוכל לעבור את המרחק עד כפתור ההעתקה בלי שהיא תברח אחריו
     if (e.target === tt || tt.contains(e.target)) return; // בזמן שהעכבר נמצא מעל חלונית ההסבר עצמה (כדי להעתיק), אין להזיז אותה אחרי הסמן
-    tt.style.left = Math.min(e.clientX + 14, window.innerWidth - 310) + "px";
-    tt.style.top = Math.min(e.clientY + 14, window.innerHeight - 90) + "px";
+    var p = clampToViewport(e.clientX + 14, e.clientY + 14, tt.offsetWidth, tt.offsetHeight);
+    tt.style.left = p.x + "px"; tt.style.top = p.y + "px";
   });
   document.addEventListener("mouseout", function (e) {
     // לא לסגור אם העכבר עובר מהרכיב המקורי אל חלונית ההסבר עצמה (כדי לאפשר להגיע לכפתור ההעתקה),
@@ -1872,12 +1905,16 @@ function initApp() {
       var x = e.clientX + 16, y = e.clientY - popH - 16;
       if (y < 8) y = e.clientY + 16;
       if (x + popW > window.innerWidth - 8) x = e.clientX - popW - 16;
-      // הידוק אחרון: לא משנה מאיפה הגענו לחישוב למעלה (ימין/שמאל של מיקום ההקשה), החלונית לעולם
-      // לא תימצב מעבר לגבולות המסך בפועל — קריטי במובייל, שבו רוחבה (אחרי המגבלה במדיה קוורי)
-      // קרוב לרוחב המסך כולו, וההקשה עצמה עשויה להיות קרובה מאוד לשוליים.
-      x = Math.max(8, Math.min(x, window.innerWidth - popW - 8));
-      y = Math.max(8, Math.min(y, window.innerHeight - popH - 8));
-      pop.style.left = x + "px"; pop.style.top = y + "px";
+      // הידוק אחרון דרך clampToViewport המשותף (ראו ההגדרה ליד #tt): לא משנה מאיפה הגענו לחישוב
+      // למעלה (ימין/שמאל של מיקום ההקשה), החלונית לעולם לא תימצב מעבר לגבולות המסך בפועל —
+      // כולל המקרה שבו pop.offsetWidth/max-width:calc(100vw...) חורגים מעט מ-window.innerWidth
+      // (למשל בגלל פער פס הגלילה בין יחידת vw ל-innerWidth), שגרם בעבר לחריגה קטנה בקצה הימני.
+      var p = clampToViewport(x, y, popW, popH);
+      pop.style.left = p.x + "px"; pop.style.top = p.y + "px";
+      // תיקון בפריימים הבאים (ראו settleAndReclamp): כש״פרוסה חדשה נבחרת, גובה עוגת הריחוף
+      // הקטנה שזה עתה נבנתה אינו מוכן מיד — נצפה לגדול בהדרגה על פני כמה פריימים, לא רק בפריים
+      // אחד (נמדד בפועל: 59px ← 84px ← 109px ← ... ← 404px) — ולכן תיקון חד-פעמי לא מספיק.
+      settleAndReclamp(pop, p.x, p.y, 24);
     });
     canvas.addEventListener("mouseleave", scheduleHide);
   }
@@ -1929,10 +1966,10 @@ function initApp() {
       var x = e.clientX + 16, y = e.clientY - popH - 16;
       if (y < 8) y = e.clientY + 16;
       if (x + popW > window.innerWidth - 8) x = e.clientX - popW - 16;
-      // ראו ההערה המקבילה ב-wireMinistryHover.
-      x = Math.max(8, Math.min(x, window.innerWidth - popW - 8));
-      y = Math.max(8, Math.min(y, window.innerHeight - popH - 8));
-      pop.style.left = x + "px"; pop.style.top = y + "px";
+      // ראו ההערה המקבילה ב-wireMinistryHover, כולל ה-settleAndReclamp שמתקן על פני כמה פריימים.
+      var p = clampToViewport(x, y, popW, popH);
+      pop.style.left = p.x + "px"; pop.style.top = p.y + "px";
+      settleAndReclamp(pop, p.x, p.y, 24);
     });
     canvas.addEventListener("mouseleave", scheduleHide);
   }
