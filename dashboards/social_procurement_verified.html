@@ -1019,6 +1019,14 @@ function initApp() {
     });
   }
   var SERVICE_PALETTE = ["#4f8ff7", "#2ecc9a", "#f2994a", "#bb6bd9", "#56ccf2", "#f2c94c", "#8d99ae"];
+  // מבהיר כל צבע הקסדצימלי באופן אחיד (מיזוג עם לבן), כדי שלכל פרוסה בעוגה — לא רק לכחולה — תהיה
+  // תגובת ריחוף עקבית, במקום להסתמך על ברירת המחדל של Chart.js שמשפיעה רק על חלק מהצבעים.
+  function lightenHex(hex, amt) {
+    var m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+    if (!m) return hex;
+    var mix = function (c) { return Math.round(parseInt(c, 16) + (255 - parseInt(c, 16)) * amt); };
+    return "#" + [m[1], m[2], m[3]].map(mix).map(function (v) { return v.toString(16).padStart(2, "0"); }).join("");
+  }
   // פילוח תקציב השירותים העיקריים של משרד נתון (מתוך מרשם 239 השירותים): topN השירותים הגדולים
   // ביותר בתקציב, ויתרת השירותים מאוחדת ל"אחר" — לשימוש בעוגת הריחוף/הסינון של התפלגות רכש לפי משרד.
   function ministryServiceBreakdown(ministryKey, topN) {
@@ -1682,7 +1690,7 @@ function initApp() {
     };
     charts[canvasId] = new Chart(ctx, {
       type: "doughnut",
-      data: { labels: labels, datasets: [{ label: "אחוז (%)", data: renderValues, backgroundColor: colors, borderColor: cssVar("--surface-1"), borderWidth: 3 }] },
+      data: { labels: labels, datasets: [{ label: "אחוז (%)", data: renderValues, backgroundColor: colors, hoverBackgroundColor: colors.map(function (c) { return lightenHex(c, 0.18); }), borderColor: cssVar("--surface-1"), borderWidth: 3 }] },
       options: {
         cutout: "62%",
         // aspectRatio מוגדר כך שגובה כרטיס העוגה יתיישר בקירוב לגובה הכרטיס הצמוד אליו (גרף הקו של
@@ -1784,7 +1792,7 @@ function initApp() {
           type: "doughnut",
           // data.data מחזיק את התקציב בפועל (לא את האחוז) כדי שהורדת הנתונים לאקסל תפיק ערכים
           // שימושיים — היחס בין הפרוסות זהה בכל מקרה, כי האחוז עצמו נגזר מאותו תקציב.
-          data: { labels: brk.labels, datasets: [{ label: "תקציב (ש״ח)", data: brk.amounts, backgroundColor: SERVICE_PALETTE.slice(0, brk.labels.length), borderColor: cssVar("--surface-2"), borderWidth: 2 }] },
+          data: { labels: brk.labels, datasets: [{ label: "תקציב (ש״ח)", data: brk.amounts, backgroundColor: SERVICE_PALETTE.slice(0, brk.labels.length), hoverBackgroundColor: SERVICE_PALETTE.slice(0, brk.labels.length).map(function (c) { return lightenHex(c, 0.18); }), borderColor: cssVar("--surface-2"), borderWidth: 2 }] },
           options: {
             cutout: "55%", aspectRatio: 1.5, animation: false,
             plugins: {
