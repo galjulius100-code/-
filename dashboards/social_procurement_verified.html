@@ -277,7 +277,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
 
       <div class="card">
         <div class="card-head"><div><div class="card-title">השקעה ברכש חברתי מתוך תקציב המשרד</div>
-        <div class="card-sub">תקציב רכש חברתי מאושר חלקי תקציב כלל המשרד המאושר, ⁦2017–2025⁩</div></div>
+        <div class="card-sub">התרשים מציג את תקציב הרכש החברתי המאושר כאחוז מתוך תקציב כלל המשרד המאושר, לכל שנה בין ⁦2017–2025⁩</div></div>
         <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="מונה: תקציב מאושר לרכש חברתי, מבלוק התקציב. מכנה: תקציב כלל המשרד ממפתח התקציב (next.obudget.org), סעיפים 23/24/20, נשלף 21.09.2026. התרשים בוחן אם הרכש החברתי תופס נתח גדל או מצטמצם מתוך תקציב המשרד עצמו, לא רק אם היקפו בשקלים גדל.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartIntensity" data-export-name="השקעה ברכש חברתי מתוך תקציב המשרד" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
         <canvas id="chartIntensity" height="200"></canvas>
         <div class="legend" id="legendIntensity"></div>
@@ -287,7 +287,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
 
     <div class="card" style="margin-top:14px">
         <div class="card-head"><div><div class="card-title">מגמת תקציב רכש רב-שנתית</div>
-        <div class="card-sub">תקציב מאושר, מיליארד ש״ח, לפי משרד — כולל קצב השינוי השנתי (year-over-year) כתווית מעל כל נקודה. במשרד ספציפי מוצגת גם השוואת נומינלי מול ריאלי במחירי 2025: שני הקווים נפגשים ב-2025 במכוון (זוהי שנת הבסיס שאליה כל השנים האחרות מתורגמות).</div></div>
+        <div class="card-sub">תקציב מאושר, מיליארד ש״ח, לפי משרד — כולל קצב השינוי לעומת השנה הקודמת, כתווית מעל כל נקודה. במשרד ספציפי מוצגת גם השוואת נומינלי מול ריאלי במחירי 2025: שני הקווים נפגשים ב-2025 במכוון, שהיא שנת הבסיס שאליה כל השנים האחרות מתורגמות.</div></div>
         <span class="tag-row"><span class="tag" id="tagTrend" style="display:none"></span><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="כל נקודה על הקו מציגה את ההיקף התקציבי המצטבר באותה שנה, ומעליה כתובה גם אחוז השינוי לעומת השנה הקודמת — כך ששני הנתונים נקראים יחד בלי להוסיף ציר נוסף לתרשים. ב'הכל' מוצגת סדרה נפרדת לכל משרד; במשרד ספציפי מוצגות שתי סדרות לאותו משרד — נומינלי וריאלי (במחירי 2025) — כדי להבחין בין גידול תקציבי אמיתי לבין גידול שמוסבר בעיקר באינפלציה. שתי הסדרות מתלכדות ב-2025 מעצם ההגדרה, כי זו שנת הבסיס של ההמרה — אין לכך משמעות; המשמעות האמיתית היא רוחב הפער בין שתי הסדרות בשנים הקודמות.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartTrend" data-export-name="מגמת תקציב רכש רב שנתית" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
         <canvas id="chartTrend" height="170"></canvas>
         <div style="font-size:11.5px;color:var(--accent);font-weight:600;margin-top:8px;line-height:1.6" id="trendInsight"></div>
@@ -321,13 +321,13 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
     <div class="grid cols-2">
       <div class="card">
         <div class="card-head"><div><div class="card-title">חלוקה תקציבית לפי נושא</div>
-        <div class="card-sub">סכום תקציב כל השירותים המתויגים בכל נושא (שירות יכול להימנות ביותר מנושא אחד)</div></div>
+        <div class="card-sub">התרשים מציג את סכום התקציב של כל השירותים המתויגים בכל נושא; שירות יכול להימנות ביותר מנושא אחד.</div></div>
         <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="מקור: מפתח לרכש חברתי, נשלף 22.09.2026. תיוג נושאי קיים לכל 239 השירותים, מאותה טבלת מקור שממנה נבנה כל שאר הדשבורד; הסכום חושב בשאילתת צבירה ישירה מול המקור (unnest לפי אחת עשרה קטגוריות), ולא מתוך 166 או 188 שירות כפי שהוצג בעבר. מציג לאילו תחומי תוכן מופנה התקציב: דיור, בריאות, חינוך, תעסוקה ועוד. עוזר לענות על השאלה על מה מוצא הכסף, לא רק כמה.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartBySubject" data-export-name="חלוקה תקציבית לפי נושא" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
         <canvas id="chartBySubject" height="220"></canvas>
       </div>
       <div class="card">
         <div class="card-head"><div><div class="card-title">חלוקה תקציבית לפי סוג מענה</div>
-        <div class="card-sub">סכום תקציב כל השירותים המתויגים בכל סוג מענה</div></div>
+        <div class="card-sub">התרשים מציג את סכום התקציב של כל השירותים המתויגים בכל סוג מענה; שירות יכול להימנות ביותר מסוג מענה אחד.</div></div>
         <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="מקור: מפתח לרכש חברתי, נשלף 22.09.2026. תיוג המענה קיים לכל 239 השירותים, מאותה טבלת מקור שממנה נבנה כל שאר הדשבורד; הסכום חושב בשאילתת צבירה ישירה מול המקור (unnest לפי עשרים קטגוריות), ולא מתוך 166 או 188 שירות כפי שהוצג בעבר. מציג באיזה אופן ניתן השירות בפועל: דיור ואשפוז, הדרכה והכשרה, טיפול פרטני ועוד — התשובה ל'איך', לצד 'על מה' בתרשים הסמוך.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartByInterv" data-export-name="חלוקה תקציבית לפי סוג מענה" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
         <canvas id="chartByInterv" height="220"></canvas>
       </div>
@@ -348,7 +348,7 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
       <div class="grid cols-2">
         <div class="card">
         <div class="card-head"><div><div class="card-title">פילוח סוגי ההתקשרויות</div>
-        <div class="card-sub" id="exemptSplitSub">מתוך כלל ההתקשרויות בטווח הנבחר, איזה חלק בוצע בכל אחד משלושת סוגי ההליך: מכרז פומבי, פטור ממכרז, והסכם מסגרת. ריחוף מעל פרוסה מציג את התפלגותה לפי שנה</div></div>
+        <div class="card-sub" id="exemptSplitSub">מתוך כלל ההתקשרויות בטווח הנבחר, איזה חלק בוצע בכל אחד משלושת סוגי ההליך: מכרז פומבי, פטור ממכרז, והסכם מסגרת. ריחוף מעל פרוסה מציג עוגה קטנה צפה עם התפלגותה לפי משרד</div></div>
         <span class="tag-row"><button type="button" class="info-btn" aria-label="הסבר על התרשים" data-tt="שלושת סוגי ההליך מבוססים על שדה 'סוג הליך' במקור: מכרז פומבי (מקובץ נפרד), ופטור ממכרז והסכם מסגרת (מקובץ הפטורים). שימו לב לשני דברים: קובץ המקור כולל את כלל הרכש של המשרד, לא רק רכש חברתי (ראו הסבר ההיקף בפתיח המדור); וזהו שדה שונה מ'עילת הפטור' (למשל 'מיזם משותף') שבתרשים הסמוך — אין ביניהם זיקה הכרחית. רשומות 'כוונת התקשרות' אינן נכללות, בהיותן הודעה מקדימה בלבד; רשומות 'מיזם ללא כוונת רווח' אינן נכללות אף הן, לאחר שנמצא כי רובן המכריע נושא סטטוס 'טרם התקבלה החלטת ועדה' ולא סטטוס מאושר — כלומר פרסום שטרם הבשיל להתקשרות, ולא התקשרות בפני עצמה.">i</button><button type="button" class="export-btn" data-export-type="chart" data-export-target="chartExemptSplit" data-export-name="פילוח סוגי ההתקשרויות" aria-label="הורדת נתוני התרשים כקובץ אקסל" title="הורדת נתוני התרשים כקובץ אקסל">⇩</button></span></div>
         <canvas id="chartExemptSplit" height="200"></canvas>
         <div class="legend" id="legendExemptSplit"></div>
