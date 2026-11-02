@@ -247,11 +247,60 @@ h2.sec{font-size:16px;margin:28px 0 3px;font-weight:800}
   .hover-pop{width:min(300px, calc(100vw - 32px));padding:12px 14px}
   .hover-pop .hover-pop-title{font-size:12.5px}
 }
-/* במסך מחשב (מעל breakpoint הטאבלט) מוגדל הדשבורד פי 1.1 ביחס לרנדור הרגיל של הדפדפן, כדי
-   שברירת המחדל (זום 100%) תיראה כמו שהמשתמש ציין שהיא הכי קריאה (זום 110% ידני). zoom, לא
-   transform:scale, כדי שהעמוד יישאר זורם כרגיל (ללא שוליים ריקים/חיתוך), בדיוק כמו זום דפדפן אמיתי. */
+/* הגדלה של כ-10% לגופני הטקסט במסך מחשב (מעל breakpoint הטאבלט), כך שברירת המחדל
+   תיראה כמו שהמשתמש ציין שהיא הכי קריאה (זום 110% ידני) — בלי להשתמש ב-zoom/transform
+   שגורמים לטשטוש טקסט ברזולוציית מסך רגילה (לא Retina): הגדלה ישירה של כל font-size
+   מצוירת נכון בכל רזולוציה, כי הדפדפן מרנדר את הגופן עצמו בגודל הסופי ולא מותח הדמיה
+   מוכנה מראש. הטאבלט/טלפון אינם מושפעים: שני בלוקי ה-640px נשארו ללא שינוי.
+*/
 @media(min-width:1101px){
-  body{zoom:1.1}
+  body{font-size:15.5px}
+  .card{padding:18px}
+  .brand-badge{font-size:13px}
+  .brand-text .t1{font-size:11.5px}
+  .brand-text .t2{font-size:16px}
+  .screen-count-label{font-size:11.5px}
+  .nav-tab{font-size:14.5px}
+  .nav-tab-num{font-size:11px}
+  .icon-btn{font-size:15.5px}
+  .table-expand-btn{font-size:13px}
+  .search-input{font-size:14px}
+  .seg button{font-size:14px}
+  .filter-label{font-size:12px}
+  .filter-note{font-size:12px}
+  .info-btn{font-size:11.5px}
+  .export-btn{font-size:11px}
+  .download-html-btn{font-size:13px}
+  .year-chip{font-size:12.5px}
+  .card-title{font-size:17px}
+  .card-sub{font-size:16px}
+  .hover-pop .hover-pop-title{font-size:16px}
+  .intro-note{font-size:15px}
+  .scope-warning{font-size:15px}
+  .src{font-size:12.5px}
+  .kpi-label{font-size:14px}
+  .kpi-value{font-size:28.5px}
+  .kpi-unit{font-size:15px}
+  .kpi-note{font-size:13px}
+  .kpi-delta{font-size:14px}
+  .kpi-ring .ring-num{font-size:14.5px}
+  .tag{font-size:12px}
+  table{font-size:14px}
+  thead th{font-size:11.5px}
+  .sort-ind{font-size:14.5px}
+  .sort-ind.active{font-size:13px}
+  .tier-row-label{font-size:14.5px}
+  .tier-row-count{font-size:12px}
+  .tier-seg{font-size:12px}
+  .tier-caption{font-size:14.5px}
+  .pill-sev{font-size:11.5px}
+  .legend{font-size:14px}
+  h2.sec{font-size:17.5px}
+  .sec-sub{font-size:13px}
+  #tt{font-size:14px}
+  #tt #ttCopyBtn{font-size:12px}
+  .stage{font-size:10.5px}
+  .footer-note{font-size:13px}
 }
 </style>
 </head>
