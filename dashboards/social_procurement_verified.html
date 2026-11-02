@@ -124,7 +124,7 @@ a{color:var(--accent)}
 .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:12px}
 .card-title{font-size:15.5px;font-weight:700}
 .card-sub{font-size:14.5px;color:var(--text-muted);margin-top:3px;line-height:1.5}
-.hover-pop{position:fixed;z-index:80;pointer-events:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;width:560px}
+.hover-pop{position:fixed;z-index:80;pointer-events:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;box-shadow:0 8px 24px rgba(0,0,0,.4);display:none;width:560px;max-width:calc(100vw - 24px)}
 .hover-pop .hover-pop-title{font-size:14.5px;font-weight:700;color:var(--text-primary);margin-bottom:6px;text-align:center}
 .card-body{flex:1;min-width:0}
 .intro-note{background:var(--accent-soft);border-inline-start:3px solid var(--accent);border-radius:12px;
@@ -1285,6 +1285,16 @@ function initApp() {
   function destroyIf(key) { if (charts[key]) { charts[key].destroy(); delete charts[key]; } }
   function baseGrid() { return { color: cssVar("--grid"), drawTicks: false }; }
   function baseTicks() { return { color: cssVar("--text-muted") }; }
+  // כל הפדינג הקבוע והפונטים הקבועים בפיקסלים בתוספי הקנבס (תוויות ערך, טקסט מרכזי בעוגה וכו')
+  // כוילו לרוחב כרטיס דסקטופ טיפוסי. במובייל אותו ריפוד/גופן קבוע "בולע" חלק גדול בהרבה מקנבס
+  // צר בהרבה, ולפעמים משאיר כמעט ואין שטח ציור בפועל (עמודות בלתי נראות, טקסט חופף). chartScale
+  // מודד את הרוחב שבו הקנבס אכן עתיד להיות מצויר (רוחב ההורה) ומחזיר יחס הקטנה (לעולם לא הגדלה
+  // מעבר ל-1), כדי שכל מי שמשתמש בפדינג/גופן קבוע יכפיל בו ויקבל ערך שתואם לרוחב בפועל.
+  function chartScale(canvasId, baseWidth) {
+    var el = document.getElementById(canvasId);
+    var w = (el && el.parentElement && el.parentElement.clientWidth) || baseWidth;
+    return Math.max(0.62, Math.min(1, w / baseWidth));
+  }
 
   function makeLine(canvasId, labels, series, opts) {
     destroyIf(canvasId);
@@ -1390,6 +1400,10 @@ function initApp() {
     destroyIf(canvasId);
     opts = opts || {};
     var ctx = document.getElementById(canvasId).getContext("2d");
+    // ראו chartScale: מקטין ריפוד/גופן קבועים ביחס לרוחב הכרטיס בפועל, כדי שעל מובייל (קנבס צר
+    // בהרבה מהרוחב שעבורו כוילו הערכים) עדיין יישאר שטח ציור אמיתי לעמודות עצמן, במקום שהריפוד
+    // הקבוע "יבלע" את כל רוחב הקנבס ויהפוך את העמודות לבלתי נראות.
+    var scl = chartScale(canvasId, 600);
     // opts.valueLabels: טקסט קבוע (למשל "499 (44.3%)") שנכתב צמוד לקצה כל עמודה, כך שהאחוז
     // מתוך הסך הכול נראה ישירות על התרשים ולא רק בהצבעה עם העכבר. מקבל מערך שטוח (מתייחס
     // לסדרה הראשונה בלבד) או מערך של מערכים, אחד לכל סדרה, כשיש יותר מסדרה אחת בתרשים.
@@ -1399,7 +1413,7 @@ function initApp() {
         if (!opts.valueLabels) return;
         var perDataset = Array.isArray(opts.valueLabels[0]) ? opts.valueLabels : [opts.valueLabels];
         var c = chart.ctx;
-        c.save(); c.font = "600 12.5px system-ui, sans-serif"; c.fillStyle = cssVar("--text-secondary");
+        c.save(); c.font = "600 " + (12.5 * scl) + "px system-ui, sans-serif"; c.fillStyle = cssVar("--text-secondary");
         // הקנבס יורש כיווניות rtl מהעמוד, וטקסט מספרי-בלבד (ספרות/סוגריים/אחוז, בלי אות עברית
         // שתעגן כיוון) עובר אלגוריתם bidi שמסדר מחדש את שני חלקי הטקסט (המספר והאחוז) זה ביחס
         // לזה ועלול לחתוך אותם בשוליים — לכן קובעים כיווניות מפורשת ל-ltr לפני הציור.
@@ -1430,7 +1444,7 @@ function initApp() {
         if (!opts.hLines || opts.horizontal) return;
         var c = chart.ctx, area = chart.chartArea, yScale = chart.scales.y;
         c.save(); c.setLineDash([4, 4]); c.lineWidth = 1; c.strokeStyle = cssVar("--text-secondary");
-        c.font = "700 13.5px system-ui, sans-serif";
+        c.font = "700 " + (13.5 * scl) + "px system-ui, sans-serif";
         c.direction = "ltr"; c.textAlign = "left"; c.textBaseline = "bottom";
         opts.hLines.forEach(function (ln) {
           var y = yScale.getPixelForValue(ln.value);
@@ -1455,7 +1469,7 @@ function initApp() {
       options: {
         indexAxis: opts.horizontal ? "y" : "x",
         aspectRatio: opts.aspectRatio,
-        layout: opts.valueLabels && opts.horizontal ? { padding: { left: opts.leftPadding || 4, right: opts.valueLabelPadding || 82 } } : undefined,
+        layout: opts.valueLabels && opts.horizontal ? { padding: { left: (opts.leftPadding || 4) * scl, right: (opts.valueLabelPadding || 82) * scl } } : undefined,
         plugins: {
           legend: { display: series.length > 1 && !opts.hideLegend, rtl: true, labels: { color: cssVar("--text-secondary"), usePointStyle: true, boxWidth: 7, boxHeight: 7 } },
           tooltip: opts.disableTooltip ? { enabled: false } : { rtl: true, callbacks: { label: function (c) {
@@ -1507,7 +1521,7 @@ function initApp() {
                     var full = this.getLabelForValue(v);
                     return full && full.length > opts.truncateAxisLabels ? full.slice(0, opts.truncateAxisLabels) + "…" : full;
                   } })
-                : baseTicks(), opts.horizontal && opts.categoryFontSize ? { font: { size: opts.categoryFontSize } } : null),
+                : baseTicks(), opts.horizontal && opts.categoryFontSize ? { font: { size: opts.categoryFontSize * scl } } : null),
               title: !opts.horizontal && opts.scaleMillions ? { display: true, text: "מיליוני ש״ח", color: cssVar("--text-muted"), font: { size: 13.5 } }
                 : !opts.horizontal && opts.percentUnit ? { display: true, text: "אחוז שינוי לעומת השנה הקודמת", color: cssVar("--text-muted"), font: { size: 13.5 } }
                 : undefined }
@@ -1524,6 +1538,9 @@ function initApp() {
     opts = opts || {};
     destroyIf(canvasId);
     var ctx = document.getElementById(canvasId).getContext("2d");
+    // ראו chartScale ליד makeBar: אותה בעיה בדיוק קיימת כאן בגופנים הקבועים של תוויות הפרוסה
+    // והטקסט המרכזי — על קנבס צר (מובייל) הם "לא יודעים" שהעוגה קטנה יותר, וחופפים זה את זה.
+    var scl = chartScale(canvasId, 420);
     // פרוסה עם אחוז אמיתי זעיר (למשל 0.1%) מצטיירת בעובי כמעט אפסי ועלולה להיעלם לגמרי מאחורי
     // המסגרת הלבנה שבין הפרוסות. renderValues מבטיח רוחב מינימלי לצורך הציור בלבד — כל תווית,
     // תיאור הובר, ומקרא ממשיכים להציג את האחוז והמספר האמיתיים מתוך values המקורי.
@@ -1551,7 +1568,7 @@ function initApp() {
           // חיצונית עם קו מוביל ובלי סכום בכלל (הסכום מוצג כבר בכותרת/במקרא). שימושי כשרוצים תרשים
           // "צפוף" שכולו קריא במבט אחד בתוך הטבעת, גם במחיר חפיפה קלה בפרוסות הצרות ביותר.
           if (opts.pctOnlyInside) {
-            c.font = "700 13px system-ui, sans-serif";
+            c.font = "700 " + (13 * scl) + "px system-ui, sans-serif";
             c.fillText(pctText, lx, ly);
             return;
           }
@@ -1559,10 +1576,10 @@ function initApp() {
           // לאחוז אך צרות מדי לטקסט המלא — כדי שגם הן יראו את המספר בתוך הפרוסה, לא רק את האחוז.
           var amountCompact = amountLabels[i] ? amountLabels[i].replace(/\s*רשומות\s*$/, "") : null;
           var available = angle * r * 0.82;
-          c.font = "700 15px system-ui, sans-serif";
+          c.font = "700 " + (15 * scl) + "px system-ui, sans-serif";
           var amountWidth = amountLabels[i] ? c.measureText(amountLabels[i]).width : Infinity;
           var compactWidth = amountCompact ? c.measureText(amountCompact).width : Infinity;
-          c.font = "600 13.5px system-ui, sans-serif";
+          c.font = "600 " + (13.5 * scl) + "px system-ui, sans-serif";
           var pctWidth = c.measureText("(" + pctText + ")").width;
           var fitsTwoLine = angle >= 0.16 && amountLabels[i] && amountWidth < available && pctWidth < available;
           var fitsCompactTwoLine = !fitsTwoLine && angle >= 0.16 && amountCompact && compactWidth < available && pctWidth < available;
@@ -1571,11 +1588,11 @@ function initApp() {
           // (ראו pendingExternal למטה), ורק אם אין בכלל סכום לפרוסה נציג אחוז בלבד בפנים.
           var fitsPctOnly = angle >= 0.16 && !fitsTwoLine && !fitsCompactTwoLine && !amountLabels[i] && pctWidth < available;
           if (fitsTwoLine) {
-            c.font = "700 15px system-ui, sans-serif"; c.fillText(amountLabels[i], lx, ly - 8);
-            c.font = "600 13.5px system-ui, sans-serif"; c.fillText("(" + pctText + ")", lx, ly + 8);
+            c.font = "700 " + (15 * scl) + "px system-ui, sans-serif"; c.fillText(amountLabels[i], lx, ly - 8 * scl);
+            c.font = "600 " + (13.5 * scl) + "px system-ui, sans-serif"; c.fillText("(" + pctText + ")", lx, ly + 8 * scl);
           } else if (fitsCompactTwoLine) {
-            c.font = "700 15px system-ui, sans-serif"; c.fillText(amountCompact, lx, ly - 8);
-            c.font = "600 13.5px system-ui, sans-serif"; c.fillText("(" + pctText + ")", lx, ly + 8);
+            c.font = "700 " + (15 * scl) + "px system-ui, sans-serif"; c.fillText(amountCompact, lx, ly - 8 * scl);
+            c.font = "600 " + (13.5 * scl) + "px system-ui, sans-serif"; c.fillText("(" + pctText + ")", lx, ly + 8 * scl);
           } else if (fitsPctOnly) {
             c.fillText(pctText, lx, ly);
           } else if (amountLabels[i]) {
@@ -1591,7 +1608,7 @@ function initApp() {
             var onRight = Math.cos(p.mid) >= 0;
             var x3 = x2 + (onRight ? 16 : -16);
             c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.lineTo(x3, y2); c.stroke();
-            c.fillStyle = cssVar("--text-secondary"); c.font = "600 13px system-ui, sans-serif";
+            c.fillStyle = cssVar("--text-secondary"); c.font = "600 " + (13 * scl) + "px system-ui, sans-serif";
             c.textAlign = onRight ? "left" : "right";
             c.fillText(p.text, x3 + (onRight ? 3 : -3), y2 - 6);
           });
@@ -1609,13 +1626,13 @@ function initApp() {
         var meta = chart.getDatasetMeta(0);
         var props = meta.data[0].getProps(["x", "y"], true);
         c.save(); c.textAlign = "center"; c.fillStyle = cssVar("--text-primary");
-        c.font = "700 22px system-ui, sans-serif";
+        c.font = "700 " + (22 * scl) + "px system-ui, sans-serif";
         c.textBaseline = opts.centerSubtext ? "bottom" : "middle";
-        c.fillText(opts.centerText, props.x, props.y + (opts.centerSubtext ? -2 : 0));
+        c.fillText(opts.centerText, props.x, props.y + (opts.centerSubtext ? -2 * scl : 0));
         if (opts.centerSubtext) {
-          c.font = "600 13px system-ui, sans-serif"; c.fillStyle = cssVar("--text-muted");
+          c.font = "600 " + (13 * scl) + "px system-ui, sans-serif"; c.fillStyle = cssVar("--text-muted");
           c.textBaseline = "top";
-          c.fillText(opts.centerSubtext, props.x, props.y + 2);
+          c.fillText(opts.centerSubtext, props.x, props.y + 2 * scl);
         }
         c.restore();
       }
@@ -1704,11 +1721,12 @@ function initApp() {
         var miniCtx = document.getElementById("chartMinistryHoverMini").getContext("2d");
         // תוויות אחוז בתוך כל פרוסה מספיק רחבה, כדי שהעוגה הצפה תהיה קריאה גם בלי להזיז את העכבר
         // לתוכה להצבעה — התרשים נועד להיות נקרא כבר במבט ראשון, לא רק כתצוגה מקדימה גסה.
+        var miniScl = chartScale("chartMinistryHoverMini", 460);
         var miniPctPlugin = {
           id: "miniPct",
           afterDraw: function (chart) {
             var c = chart.ctx, meta = chart.getDatasetMeta(0);
-            c.save(); c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = "#ffffff"; c.font = "700 15px system-ui, sans-serif";
+            c.save(); c.textAlign = "center"; c.textBaseline = "middle"; c.fillStyle = "#ffffff"; c.font = "700 " + (15 * miniScl) + "px system-ui, sans-serif";
             meta.data.forEach(function (arc, i) {
               var props = arc.getProps(["startAngle", "endAngle", "innerRadius", "outerRadius", "x", "y"], true);
               var angle = props.endAngle - props.startAngle;
