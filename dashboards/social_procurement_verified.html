@@ -178,9 +178,9 @@ thead th.sortable:hover .sort-ind{opacity:1}
 .tier-row-count{font-size:11px;color:var(--text-muted)}
 .tier-bar{display:flex;width:100%;height:30px;border-radius:7px;overflow:hidden;background:var(--surface-2)}
 .tier-seg{display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;cursor:default}
-.tier-caption{display:flex;flex-wrap:wrap;gap:10px 14px;margin-top:6px;font-size:11px;color:var(--text-secondary)}
-.tier-cap-item{display:inline-flex;align-items:center;gap:5px}
-.tier-cap-item i{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+.tier-caption{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:7px;font-size:13px;color:var(--text-secondary)}
+.tier-cap-item{display:inline-flex;align-items:center;gap:6px}
+.tier-cap-item i{width:11px;height:11px;border-radius:2px;display:inline-block;flex:none}
 tbody tr{border-bottom:1px solid var(--grid)}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:var(--surface-hover)}
@@ -2019,7 +2019,11 @@ function initApp() {
       var to = Math.min(t.to, sortedList.length);
       var slice = t.from < sortedList.length ? sortedList.slice(t.from, to) : [];
       var sum = slice.reduce(function (s, x) { return s + x.budget; }, 0);
-      return { label: t.label, color: t.color, count: slice.length, pct: total ? sum / total * 100 : 0, budget: sum };
+      // לשכבת "השירות הגדול ביותר" (פלח יחיד) שומרים גם את זהות השירות עצמו, כדי שאפשר יהיה
+      // להציג אותו בריחוף מעל הפלח — להבדיל משאר השכבות, שמאגדות כמה שירותים יחד ואין טעם
+      // לנקוב בשם אחד מתוכם.
+      var topService = (t.from === 0 && t.to === 1 && slice[0]) ? slice[0] : null;
+      return { label: t.label, color: t.color, count: slice.length, pct: total ? sum / total * 100 : 0, budget: sum, topService: topService };
     }).filter(function (x) { return x.count > 0; });
   }
   // מחליף עקומת פארטו מצטברת (שדרשה לעקוב בעין בין שני צירים כדי לחלץ מסקנה) בפס הרכב ישיר: כל
@@ -2035,6 +2039,13 @@ function initApp() {
       var tiers = tierBreakdown(e.list);
       var bar = tiers.map(function (t) {
         var text = t.pct >= 8 ? fmt(t.pct, 0) + "%" : "";
+        // לפלח "השירות הגדול ביותר" מוצגת בריחוף חלונית ההסבר המשותפת של הדשבורד (data-tt) עם
+        // שם השירות עצמו, לצד האחוז והתקציב — לא רק title דפדפן פשוט כמו בשאר הפלחים, כדי שאפשר
+        // יהיה לדעת איזה שירות ספציפי עומד מאחורי הפלח הגדול ביותר בלי לצאת לטבלה הנפרדת.
+        if (t.topService) {
+          var tt = t.topService.name + " — " + fmt(t.pct, 1) + "% מהתקציב (" + fmtInt(Math.round(t.budget)) + " ש״ח)";
+          return '<div class="tier-seg" style="width:' + t.pct + '%;background:' + cssVar(t.color) + '" data-tt="' + tt.replace(/"/g, "&quot;") + '">' + text + '</div>';
+        }
         return '<div class="tier-seg" style="width:' + t.pct + '%;background:' + cssVar(t.color) + '" title="' + t.label + ' (' + fmtInt(t.count) + ' שירותים) — ' + fmt(t.pct, 1) + '% מהתקציב">' + text + '</div>';
       }).join("");
       var caption = tiers.map(function (t) {
