@@ -1621,7 +1621,7 @@ function initApp() {
             if (val == null) val = c.parsed;
             var text = opts.scaleMillions ? ttIso(fmt(val / 1e6, 1)) + " מיליון ש״ח"
               : opts.scaleBillions ? ttIso(fmt(val / 1e9, 2)) + " מיליארד ש״ח"
-              : opts.percentUnit ? ttIso(fmt(val, 1)) + "%"
+              : opts.percentUnit ? ttIso(fmt(val, 1) + "%")
               : fmt(val, 2);
             if (opts.valueLabels) {
               var vlForDs = Array.isArray(opts.valueLabels[0]) ? opts.valueLabels[c.datasetIndex] : opts.valueLabels;
